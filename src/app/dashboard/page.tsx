@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { Item, ItemStatus } from '@/types/database'
 import { STATUS_LABELS } from '@/types/database'
@@ -18,17 +18,28 @@ const COLUMNS: ItemStatus[] = ['now', 'next', 'later']
 
 function ItemCard({
   item,
-  onMove,
+  draggingId,
   onOpen,
+  onDragStart,
+  onDragEnd,
+  onMove,
 }: {
   item: Item
-  onMove: (id: string, status: ItemStatus) => void
+  draggingId: string | null
   onOpen: (item: Item) => void
+  onDragStart: (e: React.DragEvent, id: string) => void
+  onDragEnd: () => void
+  onMove: (id: string, status: ItemStatus) => void
 }) {
   return (
     <div
-      className="group bg-white border border-zinc-200 rounded-lg p-3 shadow-sm hover:border-zinc-300 transition cursor-pointer"
+      draggable
+      onDragStart={(e) => onDragStart(e, item.id)}
+      onDragEnd={onDragEnd}
       onClick={() => onOpen(item)}
+      className={`group bg-white border border-zinc-200 rounded-lg p-3 shadow-sm hover:border-zinc-300 transition cursor-grab active:cursor-grabbing ${
+        draggingId === item.id ? 'opacity-40' : ''
+      }`}
     >
       <p className="text-sm font-medium text-zinc-900 leading-snug">{item.title}</p>
       {item.description && (
@@ -63,15 +74,29 @@ function ItemCard({
 function Column({
   status,
   items,
+  draggingId,
+  isDragOver,
   onMove,
   onAdd,
   onOpen,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }: {
   status: ItemStatus
   items: Item[]
+  draggingId: string | null
+  isDragOver: boolean
   onMove: (id: string, status: ItemStatus) => void
   onAdd: (status: ItemStatus, title: string) => void
   onOpen: (item: Item) => void
+  onDragStart: (e: React.DragEvent, id: string) => void
+  onDragEnd: () => void
+  onDragOver: (e: React.DragEvent, status: ItemStatus) => void
+  onDragLeave: (e: React.DragEvent) => void
+  onDrop: (e: React.DragEvent, status: ItemStatus) => void
 }) {
   const [draft, setDraft] = useState('')
   const [adding, setAdding] = useState(false)
@@ -85,7 +110,14 @@ function Column({
   }
 
   return (
-    <div className="flex flex-col min-w-0 flex-1">
+    <div
+      className={`flex flex-col min-w-0 flex-1 rounded-xl p-2 transition-colors ${
+        isDragOver ? 'bg-zinc-200/70 ring-2 ring-zinc-400 ring-inset' : ''
+      }`}
+      onDragOver={(e) => onDragOver(e, status)}
+      onDragLeave={onDragLeave}
+      onDrop={(e) => onDrop(e, status)}
+    >
       <div className="flex items-center justify-between mb-3 px-0.5">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
           {STATUS_LABELS[status]}
@@ -93,10 +125,24 @@ function Column({
         </h2>
       </div>
 
-      <div className="space-y-2 flex-1">
+      <div className="space-y-2 flex-1 min-h-[100px]">
         {items.map((item) => (
-          <ItemCard key={item.id} item={item} onMove={onMove} onOpen={onOpen} />
+          <ItemCard
+            key={item.id}
+            item={item}
+            draggingId={draggingId}
+            onMove={onMove}
+            onOpen={onOpen}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+          />
         ))}
+
+        {items.length === 0 && !adding && (
+          <div className="border border-dashed border-zinc-300 rounded-lg py-8 text-center text-xs text-zinc-400">
+            Drop items here
+          </div>
+        )}
 
         {adding ? (
           <div className="bg-white border border-zinc-300 rounded-lg p-2 shadow-sm">
@@ -154,6 +200,9 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState<Item | null>(null)
   const [ideaOpen, setIdeaOpen] = useState(false)
   const [ideaDraft, setIdeaDraft] = useState('')
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dragOverStatus, setDragOverStatus] = useState<ItemStatus | null>(null)
+  const dragItemId = useRef<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -161,7 +210,9 @@ export default function DashboardPage() {
     async function init() {
       try {
         const supabase = createClient()
-        const { data: { user } } = await supabase.auth.getUser()
+        const {
+          data: { user },
+        } = await supabase.auth.getUser()
 
         if (!user) {
           if (!cancelled) {
@@ -207,9 +258,7 @@ export default function DashboardPage() {
 
   const moveItem = useCallback(
     async (id: string, status: ItemStatus) => {
-      setItems((prev) =>
-        prev.map((i) => (i.id === id ? { ...i, status } : i))
-      )
+      setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
       setSelected((cur) => (cur?.id === id ? { ...cur, status } : cur))
 
       if (!demoMode) {
@@ -252,6 +301,38 @@ export default function DashboardPage() {
     setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
     setSelected(updated)
   }, [])
+
+  function onDragStart(e: React.DragEvent, id: string) {
+    dragItemId.current = id
+    setDraggingId(id)
+    e.dataTransfer.effectAllowed = 'move'
+    e.dataTransfer.setData('text/plain', id)
+  }
+
+  function onDragEnd() {
+    dragItemId.current = null
+    setDraggingId(null)
+    setDragOverStatus(null)
+  }
+
+  function onDragOver(e: React.DragEvent, status: ItemStatus) {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverStatus !== status) setDragOverStatus(status)
+  }
+
+  function onDragLeave(e: React.DragEvent) {
+    if (e.currentTarget === e.target) setDragOverStatus(null)
+  }
+
+  function onDrop(e: React.DragEvent, status: ItemStatus) {
+    e.preventDefault()
+    const id = e.dataTransfer.getData('text/plain') || dragItemId.current
+    if (id) void moveItem(id, status)
+    setDraggingId(null)
+    setDragOverStatus(null)
+    dragItemId.current = null
+  }
 
   const ideas = items.filter((i) => i.status === 'idea')
   const done = items.filter((i) => i.status === 'done')
@@ -303,11 +384,11 @@ export default function DashboardPage() {
             <>
               <p className="text-sm text-zinc-500 mb-6">
                 {demoMode
-                  ? 'Demo data — sign in to persist items to Supabase. Click any card for detail & feedback.'
-                  : 'Your roadmap. Click an item for detail and feedback.'}
+                  ? 'Demo data — drag cards between columns, or click for detail. Sign in to persist.'
+                  : 'Drag cards between Now / Next / Later. Click an item for detail and feedback.'}
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 {COLUMNS.map((status) => (
                   <Column
                     key={status}
@@ -315,9 +396,16 @@ export default function DashboardPage() {
                     items={items
                       .filter((i) => i.status === status)
                       .sort((a, b) => a.sort_order - b.sort_order)}
+                    draggingId={draggingId}
+                    isDragOver={dragOverStatus === status}
                     onMove={moveItem}
                     onAdd={addItem}
                     onOpen={setSelected}
+                    onDragStart={onDragStart}
+                    onDragEnd={onDragEnd}
+                    onDragOver={onDragOver}
+                    onDragLeave={onDragLeave}
+                    onDrop={onDrop}
                   />
                 ))}
               </div>
@@ -331,11 +419,12 @@ export default function DashboardPage() {
                     {done.map((item) => (
                       <div
                         key={item.id}
-                        className="text-sm text-zinc-500 bg-white border border-zinc-100 rounded-md px-3 py-1.5"
+                        draggable
+                        onDragStart={(e) => onDragStart(e, item.id)}
+                        onDragEnd={onDragEnd}
+                        className="text-sm text-zinc-500 bg-white border border-zinc-100 rounded-md px-3 py-1.5 cursor-grab"
                       >
-                        <span className="line-through decoration-zinc-300">
-                          {item.title}
-                        </span>
+                        <span className="line-through decoration-zinc-300">{item.title}</span>
                         <button
                           onClick={() => moveItem(item.id, 'later')}
                           className="ml-2 text-[11px] text-zinc-400 hover:text-zinc-600"
@@ -352,13 +441,9 @@ export default function DashboardPage() {
         </div>
       </main>
 
-      {/* Ideas panel */}
       {ideaOpen && (
         <div className="fixed inset-0 z-40 flex justify-end">
-          <div
-            className="absolute inset-0 bg-black/20"
-            onClick={() => setIdeaOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/20" onClick={() => setIdeaOpen(false)} />
           <div className="relative w-full max-w-sm bg-white shadow-xl border-l border-zinc-200 flex flex-col">
             <div className="h-12 flex items-center justify-between px-4 border-b border-zinc-200">
               <h2 className="font-semibold text-sm">Ideas</h2>
@@ -419,7 +504,6 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Item detail */}
       {selected && (
         <ItemDetail
           item={selected}
