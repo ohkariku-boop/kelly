@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { Item, ItemStatus, Feedback } from '@/types/database'
 import { STATUS_LABELS, ITEM_STATUSES } from '@/types/database'
 import { updateItem, fetchFeedback, addFeedback } from '@/lib/items'
+import { DEMO_FEEDBACK } from '@/lib/demo-data'
 
 type Props = {
   item: Item
@@ -35,7 +36,7 @@ export function ItemDetail({
     if (!demoMode && workspaceId) {
       fetchFeedback(item.id).then(setFeedback)
     } else {
-      setFeedback([])
+      setFeedback(DEMO_FEEDBACK[item.id] || [])
     }
   }, [item.id, item.title, item.description, demoMode, workspaceId])
 

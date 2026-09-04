@@ -1,0 +1,195 @@
+import type { Item, Feedback } from '@/types/database'
+
+/** Rich PM-oriented demo so visitors instantly see Kelly's job */
+export const DEMO_WORKSPACE_NAME = 'Acme Product'
+
+export const DEMO_ITEMS: Item[] = [
+  {
+    id: 'demo-1',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Reduce checkout drop-off on mobile',
+    description:
+      'Mobile conversion is 18% below desktop. Hypothesis: address form + payment step friction. Success: +8pp mobile conversion in 6 weeks.',
+    status: 'now',
+    priority: 'urgent',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-08-20T10:00:00Z',
+    updated_at: '2026-09-01T10:00:00Z',
+  },
+  {
+    id: 'demo-2',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Self-serve plan upgrade flow',
+    description:
+      'Sales currently handles every upgrade. Goal: 40% of upgrades self-serve so AEs focus on expansion accounts.',
+    status: 'now',
+    priority: 'high',
+    owner_id: null,
+    sort_order: 1,
+    created_by: null,
+    created_at: '2026-08-22T10:00:00Z',
+    updated_at: '2026-09-02T10:00:00Z',
+  },
+  {
+    id: 'demo-3',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'In-app NPS after key activation moment',
+    description:
+      'We only survey by email. Capture signal right after first successful project create.',
+    status: 'next',
+    priority: 'medium',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-08-25T10:00:00Z',
+    updated_at: '2026-08-25T10:00:00Z',
+  },
+  {
+    id: 'demo-4',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Public roadmap page for customers',
+    description:
+      'Reduce “when is X shipping?” tickets. Share Now/Next/Later without exposing internal debate.',
+    status: 'next',
+    priority: 'medium',
+    owner_id: null,
+    sort_order: 1,
+    created_by: null,
+    created_at: '2026-08-28T10:00:00Z',
+    updated_at: '2026-08-28T10:00:00Z',
+  },
+  {
+    id: 'demo-5',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'AI draft for weekly stakeholder update',
+    description:
+      'PMs spend 45+ min/week writing status. One-click draft from current board state.',
+    status: 'next',
+    priority: 'high',
+    owner_id: null,
+    sort_order: 2,
+    created_by: null,
+    created_at: '2026-08-30T10:00:00Z',
+    updated_at: '2026-08-30T10:00:00Z',
+  },
+  {
+    id: 'demo-6',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Workspace-level analytics for admins',
+    description:
+      'Enterprise prospects ask for usage dashboards before signing. Parked until Q4 capacity.',
+    status: 'later',
+    priority: 'low',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-07-15T10:00:00Z',
+    updated_at: '2026-08-10T10:00:00Z',
+  },
+  {
+    id: 'demo-7',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Dark mode for the web app',
+    description:
+      'Frequent request on Twitter and in support. Not tied to a current outcome — keep as idea until we validate demand.',
+    status: 'idea',
+    priority: 'none',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-09-01T10:00:00Z',
+    updated_at: '2026-09-01T10:00:00Z',
+  },
+  {
+    id: 'demo-8',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Slack integration for feedback intake',
+    description:
+      'Sales and CS drop feature asks in #product-feedback. Pull them into Kelly instead of a spreadsheet.',
+    status: 'idea',
+    priority: 'medium',
+    owner_id: null,
+    sort_order: 1,
+    created_by: null,
+    created_at: '2026-09-02T10:00:00Z',
+    updated_at: '2026-09-02T10:00:00Z',
+  },
+  {
+    id: 'demo-9',
+    workspace_id: 'demo',
+    goal_id: null,
+    title: 'Onboarding checklist v1',
+    description:
+      'Shipped last month. Activation +12% for teams that complete checklist.',
+    status: 'done',
+    priority: 'high',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-07-01T10:00:00Z',
+    updated_at: '2026-08-15T10:00:00Z',
+  },
+]
+
+export const DEMO_FEEDBACK: Record<string, Feedback[]> = {
+  'demo-1': [
+    {
+      id: 'fb-1',
+      workspace_id: 'demo',
+      item_id: 'demo-1',
+      content:
+        '“I abandon cart on my phone every time — too many fields and the keyboard covers the pay button.” — Customer interview, Aug 28',
+      source: 'user interview',
+      customer_name: 'Maya R.',
+      created_by: null,
+      created_at: '2026-08-28T14:00:00Z',
+    },
+    {
+      id: 'fb-2',
+      workspace_id: 'demo',
+      item_id: 'demo-1',
+      content:
+        'Support ticket volume for “can’t pay on mobile” up 34% month over month.',
+      source: 'support',
+      customer_name: null,
+      created_by: null,
+      created_at: '2026-09-01T09:00:00Z',
+    },
+  ],
+  'demo-2': [
+    {
+      id: 'fb-3',
+      workspace_id: 'demo',
+      item_id: 'demo-2',
+      content:
+        'AE: “I spend half my week pushing upgrade links. Customers just want a button in billing.”',
+      source: 'sales',
+      customer_name: null,
+      created_by: null,
+      created_at: '2026-08-22T11:00:00Z',
+    },
+  ],
+  'demo-4': [
+    {
+      id: 'fb-4',
+      workspace_id: 'demo',
+      item_id: 'demo-4',
+      content:
+        '“We’d renew faster if we could see what’s coming without booking another call.” — Expansion account CSM note',
+      source: 'cs',
+      customer_name: null,
+      created_by: null,
+      created_at: '2026-08-29T16:00:00Z',
+    },
+  ],
+}

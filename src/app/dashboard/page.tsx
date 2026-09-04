@@ -12,81 +12,9 @@ import {
   updateItemStatus,
 } from '@/lib/items'
 import { ItemDetail } from '@/components/ItemDetail'
+import { DEMO_ITEMS } from '@/lib/demo-data'
 
 const COLUMNS: ItemStatus[] = ['now', 'next', 'later']
-
-const DEMO_ITEMS: Item[] = [
-  {
-    id: 'demo-1',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Ship magic-link login',
-    description: 'Get auth working end-to-end so real data can persist.',
-    status: 'now',
-    priority: 'high',
-    owner_id: null,
-    sort_order: 0,
-    created_by: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-2',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Run Supabase schema',
-    description: 'Execute supabase/schema.sql in the SQL editor.',
-    status: 'now',
-    priority: 'high',
-    owner_id: null,
-    sort_order: 1,
-    created_by: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-3',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Stakeholder update template',
-    description: 'One-click progress / risks / next / asks.',
-    status: 'next',
-    priority: 'medium',
-    owner_id: null,
-    sort_order: 0,
-    created_by: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-4',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Feedback on every item',
-    description: 'So “why are we building this?” is always one click away.',
-    status: 'next',
-    priority: 'medium',
-    owner_id: null,
-    sort_order: 1,
-    created_by: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-  {
-    id: 'demo-5',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Optional goals view',
-    description: 'Lightweight framing — not required hierarchy.',
-    status: 'later',
-    priority: 'low',
-    owner_id: null,
-    sort_order: 0,
-    created_by: null,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
-]
 
 function ItemCard({
   item,
