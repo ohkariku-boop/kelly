@@ -5,11 +5,13 @@ import type { Item, ItemStatus, Feedback } from '@/types/database'
 import { STATUS_LABELS, ITEM_STATUSES } from '@/types/database'
 import { updateItem, fetchFeedback, addFeedback } from '@/lib/items'
 import { DEMO_FEEDBACK } from '@/lib/demo-data'
+import { localAddFeedback, localGetFeedback, localUpdateItem } from '@/lib/local-workspace'
 
 type Props = {
   item: Item
   workspaceId: string | null
   demoMode: boolean
+  kellyPmMode?: boolean
   onClose: () => void
   onUpdate: (item: Item) => void
   onMove: (id: string, status: ItemStatus) => void
@@ -19,6 +21,7 @@ export function ItemDetail({
   item,
   workspaceId,
   demoMode,
+  kellyPmMode = false,
   onClose,
   onUpdate,
   onMove,
@@ -33,36 +36,52 @@ export function ItemDetail({
   useEffect(() => {
     setTitle(item.title)
     setDescription(item.description || '')
-    if (!demoMode && workspaceId) {
+    if (kellyPmMode) {
+      setFeedback(localGetFeedback(item.id))
+    } else if (!demoMode && workspaceId) {
       fetchFeedback(item.id).then(setFeedback)
     } else {
       setFeedback(DEMO_FEEDBACK[item.id] || [])
     }
-  }, [item.id, item.title, item.description, demoMode, workspaceId])
+  }, [item.id, item.title, item.description, demoMode, workspaceId, kellyPmMode])
 
   async function saveMeta() {
+    const next = {
+      ...item,
+      title: title.trim() || item.title,
+      description: description.trim() || null,
+    }
+    if (kellyPmMode) {
+      localUpdateItem(item.id, {
+        title: next.title,
+        description: next.description,
+      })
+      onUpdate(next)
+      return
+    }
     if (demoMode) {
-      onUpdate({ ...item, title, description: description || null })
+      onUpdate(next)
       return
     }
     setSaving(true)
     const ok = await updateItem(item.id, {
-      title: title.trim() || item.title,
-      description: description.trim() || null,
+      title: next.title,
+      description: next.description,
     })
     setSaving(false)
-    if (ok) {
-      onUpdate({
-        ...item,
-        title: title.trim() || item.title,
-        description: description.trim() || null,
-      })
-    }
+    if (ok) onUpdate(next)
   }
 
   async function submitFeedback() {
     const content = fbDraft.trim()
     if (!content) return
+
+    if (kellyPmMode) {
+      const created = localAddFeedback(item.id, content)
+      setFeedback((prev) => [created, ...prev])
+      setFbDraft('')
+      return
+    }
 
     if (demoMode) {
       const fake: Feedback = {

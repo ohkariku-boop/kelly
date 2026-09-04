@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { Item, ItemStatus } from '@/types/database'
 import { STATUS_LABELS } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
@@ -10,9 +11,18 @@ import {
   fetchItems,
   createItem,
   updateItemStatus,
+  updateItem,
 } from '@/lib/items'
 import { ItemDetail } from '@/components/ItemDetail'
 import { DEMO_ITEMS } from '@/lib/demo-data'
+import {
+  isKellyPmSession,
+  endKellyPmSession,
+  loadWorkspace,
+  localCreateItem,
+  localUpdateStatus,
+  localUpdateItem,
+} from '@/lib/local-workspace'
 
 const COLUMNS: ItemStatus[] = ['now', 'next', 'later']
 
@@ -191,11 +201,13 @@ function Column({
   )
 }
 
+type Mode = 'loading' | 'demo' | 'kelly-pm' | 'supabase'
+
 export default function DashboardPage() {
-  const [items, setItems] = useState<Item[]>(DEMO_ITEMS)
+  const router = useRouter()
+  const [items, setItems] = useState<Item[]>([])
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
-  const [demoMode, setDemoMode] = useState(true)
-  const [loading, setLoading] = useState(true)
+  const [mode, setMode] = useState<Mode>('loading')
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [selected, setSelected] = useState<Item | null>(null)
   const [ideaOpen, setIdeaOpen] = useState(false)
@@ -208,6 +220,17 @@ export default function DashboardPage() {
     let cancelled = false
 
     async function init() {
+      // Kelly PM local full-feature session
+      if (isKellyPmSession()) {
+        const ws = loadWorkspace()
+        if (!cancelled) {
+          setItems(ws.items)
+          setMode('kelly-pm')
+          setUserEmail('Kelly PM')
+        }
+        return
+      }
+
       try {
         const supabase = createClient()
         const {
@@ -216,9 +239,8 @@ export default function DashboardPage() {
 
         if (!user) {
           if (!cancelled) {
-            setDemoMode(true)
+            setMode('demo')
             setItems(DEMO_ITEMS)
-            setLoading(false)
           }
           return
         }
@@ -228,8 +250,8 @@ export default function DashboardPage() {
         const wsId = await ensureWorkspace()
         if (!wsId) {
           if (!cancelled) {
-            setDemoMode(true)
-            setLoading(false)
+            setMode('demo')
+            setItems(DEMO_ITEMS)
           }
           return
         }
@@ -237,15 +259,13 @@ export default function DashboardPage() {
         const remote = await fetchItems(wsId)
         if (!cancelled) {
           setWorkspaceId(wsId)
-          setDemoMode(false)
+          setMode('supabase')
           setItems(remote.length > 0 ? remote : [])
-          setLoading(false)
         }
       } catch {
         if (!cancelled) {
-          setDemoMode(true)
+          setMode('demo')
           setItems(DEMO_ITEMS)
-          setLoading(false)
         }
       }
     }
@@ -261,16 +281,24 @@ export default function DashboardPage() {
       setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
       setSelected((cur) => (cur?.id === id ? { ...cur, status } : cur))
 
-      if (!demoMode) {
+      if (mode === 'kelly-pm') {
+        localUpdateStatus(id, status)
+      } else if (mode === 'supabase') {
         await updateItemStatus(id, status)
       }
     },
-    [demoMode]
+    [mode]
   )
 
   const addItem = useCallback(
     async (status: ItemStatus, title: string) => {
-      if (demoMode || !workspaceId) {
+      if (mode === 'kelly-pm') {
+        const created = localCreateItem(title, status)
+        setItems((prev) => [created, ...prev])
+        return
+      }
+
+      if (mode === 'demo' || !workspaceId) {
         const local: Item = {
           id: crypto.randomUUID(),
           workspace_id: 'demo',
@@ -290,17 +318,34 @@ export default function DashboardPage() {
       }
 
       const created = await createItem(workspaceId, title, status)
-      if (created) {
-        setItems((prev) => [created, ...prev])
-      }
+      if (created) setItems((prev) => [created, ...prev])
     },
-    [demoMode, workspaceId]
+    [mode, workspaceId]
   )
 
-  const handleItemUpdate = useCallback((updated: Item) => {
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
-    setSelected(updated)
-  }, [])
+  const handleItemUpdate = useCallback(
+    async (updated: Item) => {
+      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)))
+      setSelected(updated)
+
+      if (mode === 'kelly-pm') {
+        localUpdateItem(updated.id, {
+          title: updated.title,
+          description: updated.description,
+          status: updated.status,
+          priority: updated.priority,
+        })
+      } else if (mode === 'supabase') {
+        await updateItem(updated.id, {
+          title: updated.title,
+          description: updated.description,
+          status: updated.status,
+          priority: updated.priority,
+        })
+      }
+    },
+    [mode]
+  )
 
   function onDragStart(e: React.DragEvent, id: string) {
     dragItemId.current = id
@@ -334,6 +379,16 @@ export default function DashboardPage() {
     dragItemId.current = null
   }
 
+  function signOut() {
+    if (mode === 'kelly-pm') {
+      endKellyPmSession()
+      router.push('/login')
+      return
+    }
+    const supabase = createClient()
+    void supabase.auth.signOut().then(() => router.push('/login'))
+  }
+
   const ideas = items.filter((i) => i.status === 'idea')
   const done = items.filter((i) => i.status === 'done')
 
@@ -351,9 +406,14 @@ export default function DashboardPage() {
           <span className="text-sm text-zinc-600">Roadmap</span>
         </div>
         <div className="flex items-center gap-2">
-          {demoMode && (
+          {mode === 'demo' && (
             <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
               Demo mode
+            </span>
+          )}
+          {mode === 'kelly-pm' && (
+            <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
+              Kelly PM
             </span>
           )}
           {userEmail && (
@@ -365,27 +425,37 @@ export default function DashboardPage() {
           >
             Ideas ({ideas.length})
           </button>
-          {!userEmail && (
+          {mode === 'demo' ? (
             <Link
               href="/login"
               className="text-xs bg-zinc-900 text-white px-3 py-1.5 rounded-md hover:bg-zinc-800"
             >
               Sign in
             </Link>
+          ) : (
+            <button
+              onClick={signOut}
+              className="text-xs text-zinc-500 hover:text-zinc-800 px-2 py-1"
+            >
+              Sign out
+            </button>
           )}
         </div>
       </header>
 
       <main className="flex-1 overflow-auto p-4 md:p-6">
         <div className="max-w-5xl mx-auto">
-          {loading ? (
+          {mode === 'loading' ? (
             <p className="text-sm text-zinc-400 py-12 text-center">Loading…</p>
           ) : (
             <>
               <p className="text-sm text-zinc-500 mb-6">
-                {demoMode
-                  ? 'Demo data — drag cards between columns, or click for detail. Sign in to persist.'
-                  : 'Drag cards between Now / Next / Later. Click an item for detail and feedback.'}
+                {mode === 'demo' &&
+                  'Read-only demo sample — sign in as Kelly PM for full features that save in this browser.'}
+                {mode === 'kelly-pm' &&
+                  'Signed in as Kelly PM. Changes persist in this browser. Drag cards or click for detail & feedback.'}
+                {mode === 'supabase' &&
+                  'Your workspace. Drag cards between Now / Next / Later. Click an item for detail and feedback.'}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
@@ -508,9 +578,12 @@ export default function DashboardPage() {
         <ItemDetail
           item={selected}
           workspaceId={workspaceId}
-          demoMode={demoMode}
+          demoMode={mode !== 'supabase'}
+          kellyPmMode={mode === 'kelly-pm'}
           onClose={() => setSelected(null)}
-          onUpdate={handleItemUpdate}
+          onUpdate={(item) => {
+            void handleItemUpdate(item)
+          }}
           onMove={moveItem}
         />
       )}
