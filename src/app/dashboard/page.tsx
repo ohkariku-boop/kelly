@@ -539,6 +539,14 @@ export default function DashboardPage() {
           >
             Ideas ({ideas.length})
           </button>
+          {mode === 'supabase' && (
+            <Link
+              href="/settings/members"
+              className="text-xs text-zinc-600 hover:text-zinc-900 px-2 py-1 rounded hover:bg-zinc-100"
+            >
+              Team
+            </Link>
+          )}
           {mode === 'demo' ? (
             <Link
               href="/login"

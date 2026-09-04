@@ -1,10 +1,13 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Item, ItemStatus, Feedback } from '@/types/database'
+import { ensureProfile } from '@/lib/workspace'
 
 export async function ensureWorkspace(): Promise<string | null> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
+
+  await ensureProfile()
 
   const { data: memberships } = await supabase
     .from('workspace_members')

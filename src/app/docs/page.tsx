@@ -22,6 +22,11 @@ const SECTIONS = [
     href: '/docs/updates',
     body: 'Structured stakeholder communication without status theater.',
   },
+  {
+    title: 'Team & multi-user',
+    href: '/docs/team',
+    body: 'Workspace members, roles, invite links, and shared roadmaps.',
+  },
 ]
 
 export default function DocsIndex() {
