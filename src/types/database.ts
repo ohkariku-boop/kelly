@@ -1,11 +1,3 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
-
 export type Workspace = {
   id: string
   name: string
@@ -29,43 +21,23 @@ export type Goal = {
   description: string | null
   metric: string | null
   status: 'active' | 'achieved' | 'abandoned'
-  target_date: string | null
   created_by: string | null
   created_at: string
   updated_at: string
 }
 
-export type Initiative = {
-  id: string
-  workspace_id: string
-  goal_id: string | null
-  title: string
-  description: string | null
-  status: 'proposed' | 'planned' | 'active' | 'completed' | 'canceled'
-  priority: 'urgent' | 'high' | 'medium' | 'low' | 'none'
-  start_date: string | null
-  target_date: string | null
-  created_by: string | null
-  created_at: string
-  updated_at: string
-}
+/** The only unit of work. Status is locked. */
+export type ItemStatus = 'idea' | 'now' | 'next' | 'later' | 'done'
 
 export type Item = {
   id: string
   workspace_id: string
-  initiative_id: string | null
   goal_id: string | null
   title: string
   description: string | null
-  status: 'idea' | 'prioritized' | 'in_progress' | 'shipped' | 'parked'
+  status: ItemStatus
   priority: 'urgent' | 'high' | 'medium' | 'low' | 'none'
-  reach: number | null
-  impact: number | null
-  confidence: number | null
-  effort: number | null
   owner_id: string | null
-  target_quarter: string | null
-  target_date: string | null
   sort_order: number
   created_by: string | null
   created_at: string
@@ -86,8 +58,6 @@ export type Feedback = {
 export type Update = {
   id: string
   workspace_id: string
-  initiative_id: string | null
-  goal_id: string | null
   title: string
   progress: string | null
   risks: string | null
@@ -103,4 +73,14 @@ export type Label = {
   workspace_id: string
   name: string
   color: string
+}
+
+export const ITEM_STATUSES: ItemStatus[] = ['idea', 'now', 'next', 'later', 'done']
+
+export const STATUS_LABELS: Record<ItemStatus, string> = {
+  idea: 'Idea',
+  now: 'Now',
+  next: 'Next',
+  later: 'Later',
+  done: 'Done',
 }
