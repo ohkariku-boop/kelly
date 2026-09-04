@@ -1,0 +1,208 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import type { Item, ItemStatus, Feedback } from '@/types/database'
+import { STATUS_LABELS, ITEM_STATUSES } from '@/types/database'
+import { updateItem, fetchFeedback, addFeedback } from '@/lib/items'
+
+type Props = {
+  item: Item
+  workspaceId: string | null
+  demoMode: boolean
+  onClose: () => void
+  onUpdate: (item: Item) => void
+  onMove: (id: string, status: ItemStatus) => void
+}
+
+export function ItemDetail({
+  item,
+  workspaceId,
+  demoMode,
+  onClose,
+  onUpdate,
+  onMove,
+}: Props) {
+  const [title, setTitle] = useState(item.title)
+  const [description, setDescription] = useState(item.description || '')
+  const [feedback, setFeedback] = useState<Feedback[]>([])
+  const [fbDraft, setFbDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [fbLoading, setFbLoading] = useState(false)
+
+  useEffect(() => {
+    setTitle(item.title)
+    setDescription(item.description || '')
+    if (!demoMode && workspaceId) {
+      fetchFeedback(item.id).then(setFeedback)
+    } else {
+      setFeedback([])
+    }
+  }, [item.id, item.title, item.description, demoMode, workspaceId])
+
+  async function saveMeta() {
+    if (demoMode) {
+      onUpdate({ ...item, title, description: description || null })
+      return
+    }
+    setSaving(true)
+    const ok = await updateItem(item.id, {
+      title: title.trim() || item.title,
+      description: description.trim() || null,
+    })
+    setSaving(false)
+    if (ok) {
+      onUpdate({
+        ...item,
+        title: title.trim() || item.title,
+        description: description.trim() || null,
+      })
+    }
+  }
+
+  async function submitFeedback() {
+    const content = fbDraft.trim()
+    if (!content) return
+
+    if (demoMode) {
+      const fake: Feedback = {
+        id: crypto.randomUUID(),
+        workspace_id: 'demo',
+        item_id: item.id,
+        content,
+        source: 'demo',
+        customer_name: null,
+        created_by: null,
+        created_at: new Date().toISOString(),
+      }
+      setFeedback((prev) => [fake, ...prev])
+      setFbDraft('')
+      return
+    }
+
+    if (!workspaceId) return
+    setFbLoading(true)
+    const created = await addFeedback(workspaceId, item.id, content)
+    setFbLoading(false)
+    if (created) {
+      setFeedback((prev) => [created, ...prev])
+      setFbDraft('')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex justify-end">
+      <div className="absolute inset-0 bg-black/25" onClick={onClose} />
+      <div className="relative w-full max-w-md bg-white shadow-2xl border-l border-zinc-200 flex flex-col h-full">
+        {/* Header */}
+        <div className="h-12 flex items-center justify-between px-4 border-b border-zinc-200 shrink-0">
+          <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
+            Item
+          </span>
+          <button
+            onClick={onClose}
+            className="text-sm text-zinc-500 hover:text-zinc-800"
+          >
+            Close
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-auto p-4 space-y-5">
+          {/* Title */}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={saveMeta}
+            className="w-full text-lg font-semibold text-zinc-900 outline-none border-b border-transparent focus:border-zinc-200 pb-1"
+            placeholder="Title"
+          />
+
+          {/* Status */}
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+              Status
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {ITEM_STATUSES.map((s) => (
+                <button
+                  key={s}
+                  onClick={() => onMove(item.id, s)}
+                  className={`text-xs px-2.5 py-1 rounded-full border transition ${
+                    item.status === s
+                      ? 'bg-zinc-900 text-white border-zinc-900'
+                      : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400'
+                  }`}
+                >
+                  {STATUS_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+              Description
+            </p>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              onBlur={saveMeta}
+              rows={4}
+              placeholder="Why this matters, scope, notes…"
+              className="w-full text-sm text-zinc-700 border border-zinc-200 rounded-lg p-3 outline-none focus:border-zinc-400 resize-none placeholder:text-zinc-400"
+            />
+            {saving && (
+              <p className="text-[11px] text-zinc-400 mt-1">Saving…</p>
+            )}
+          </div>
+
+          {/* Feedback */}
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+              Feedback
+            </p>
+            <div className="flex gap-2 mb-3">
+              <input
+                value={fbDraft}
+                onChange={(e) => setFbDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') submitFeedback()
+                }}
+                placeholder="Customer quote or note…"
+                className="flex-1 text-sm border border-zinc-200 rounded-lg px-3 py-2 outline-none focus:border-zinc-400"
+              />
+              <button
+                onClick={submitFeedback}
+                disabled={fbLoading || !fbDraft.trim()}
+                className="text-xs bg-zinc-900 text-white px-3 py-2 rounded-lg hover:bg-zinc-800 disabled:opacity-40"
+              >
+                Add
+              </button>
+            </div>
+
+            {feedback.length === 0 ? (
+              <p className="text-sm text-zinc-400 py-4 text-center border border-dashed border-zinc-200 rounded-lg">
+                No feedback yet. Attach the “why” here.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {feedback.map((f) => (
+                  <li
+                    key={f.id}
+                    className="text-sm bg-amber-50/80 border border-amber-100 rounded-lg px-3 py-2.5 text-zinc-800"
+                  >
+                    <p className="leading-relaxed">{f.content}</p>
+                    <p className="text-[11px] text-zinc-400 mt-1.5">
+                      {f.source || 'note'} ·{' '}
+                      {new Date(f.created_at).toLocaleDateString()}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
