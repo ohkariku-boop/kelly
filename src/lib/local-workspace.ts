@@ -1,10 +1,13 @@
-import type { Item, ItemStatus, Feedback } from '@/types/database'
-import { DEMO_ITEMS, DEMO_FEEDBACK } from '@/lib/demo-data'
+import type { Item, ItemStatus, Feedback, Product } from '@/types/database'
+import { PRODUCT_COLORS } from '@/types/database'
+import { DEMO_ITEMS, DEMO_FEEDBACK, DEMO_PRODUCTS } from '@/lib/demo-data'
 
-const STORAGE_KEY = 'kelly-pm-workspace-v1'
+const STORAGE_KEY = 'kelly-pm-workspace-v2'
 const SESSION_KEY = 'kelly-pm-session'
+const ACTIVE_PRODUCT_KEY = 'kelly-pm-active-product'
 
 export type LocalWorkspace = {
+  products: Product[]
   items: Item[]
   feedback: Record<string, Feedback[]>
 }
@@ -18,9 +21,11 @@ export function startKellyPmSession() {
   localStorage.setItem(SESSION_KEY, '1')
   if (!localStorage.getItem(STORAGE_KEY)) {
     saveWorkspace({
+      products: structuredClone(DEMO_PRODUCTS),
       items: structuredClone(DEMO_ITEMS),
       feedback: structuredClone(DEMO_FEEDBACK),
     })
+    setActiveProductId(DEMO_PRODUCTS[0]?.id ?? null)
   }
 }
 
@@ -33,13 +38,23 @@ export function loadWorkspace(): LocalWorkspace {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) {
       return {
+        products: structuredClone(DEMO_PRODUCTS),
         items: structuredClone(DEMO_ITEMS),
         feedback: structuredClone(DEMO_FEEDBACK),
       }
     }
-    return JSON.parse(raw) as LocalWorkspace
+    const parsed = JSON.parse(raw) as LocalWorkspace
+    if (!parsed.products?.length) {
+      parsed.products = structuredClone(DEMO_PRODUCTS)
+    }
+    parsed.items = (parsed.items || []).map((i) => ({
+      ...i,
+      product_id: i.product_id || parsed.products[0]?.id || 'prod-mobile',
+    }))
+    return parsed
   } catch {
     return {
+      products: structuredClone(DEMO_PRODUCTS),
       items: structuredClone(DEMO_ITEMS),
       feedback: structuredClone(DEMO_FEEDBACK),
     }
@@ -50,11 +65,46 @@ export function saveWorkspace(ws: LocalWorkspace) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(ws))
 }
 
-export function localCreateItem(title: string, status: ItemStatus): Item {
+export function getActiveProductId(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(ACTIVE_PRODUCT_KEY)
+}
+
+export function setActiveProductId(id: string | null) {
+  if (id) localStorage.setItem(ACTIVE_PRODUCT_KEY, id)
+  else localStorage.removeItem(ACTIVE_PRODUCT_KEY)
+}
+
+export function localCreateProduct(name: string, description?: string): Product {
+  const ws = loadWorkspace()
+  const color = PRODUCT_COLORS[ws.products.length % PRODUCT_COLORS.length]
+  const product: Product = {
+    id: crypto.randomUUID(),
+    workspace_id: 'kelly-pm',
+    name: name.trim(),
+    description: description?.trim() || null,
+    color,
+    status: 'active',
+    sort_order: ws.products.length,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  ws.products = [...ws.products, product]
+  saveWorkspace(ws)
+  setActiveProductId(product.id)
+  return product
+}
+
+export function localCreateItem(
+  productId: string,
+  title: string,
+  status: ItemStatus
+): Item {
   const ws = loadWorkspace()
   const item: Item = {
     id: crypto.randomUUID(),
     workspace_id: 'kelly-pm',
+    product_id: productId,
     goal_id: null,
     title,
     description: null,
@@ -81,7 +131,9 @@ export function localUpdateStatus(id: string, status: ItemStatus) {
 
 export function localUpdateItem(
   id: string,
-  patch: Partial<Pick<Item, 'title' | 'description' | 'status' | 'priority'>>
+  patch: Partial<
+    Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'product_id'>
+  >
 ) {
   const ws = loadWorkspace()
   ws.items = ws.items.map((i) =>

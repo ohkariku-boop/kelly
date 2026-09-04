@@ -62,7 +62,8 @@ export async function fetchItems(workspaceId: string): Promise<Item[]> {
 export async function createItem(
   workspaceId: string,
   title: string,
-  status: ItemStatus = 'idea'
+  status: ItemStatus = 'idea',
+  productId?: string
 ): Promise<Item | null> {
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -71,6 +72,7 @@ export async function createItem(
     .from('items')
     .insert({
       workspace_id: workspaceId,
+      product_id: productId ?? null,
       title,
       status,
       created_by: user?.id ?? null,
@@ -161,4 +163,32 @@ export async function addFeedback(
     return null
   }
   return data as Feedback
+}
+
+export async function fetchProducts(workspaceId: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('sort_order', { ascending: true })
+  if (error) {
+    console.error('fetchProducts', error)
+    return []
+  }
+  return data || []
+}
+
+export async function createProduct(workspaceId: string, name: string) {
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from('products')
+    .insert({ workspace_id: workspaceId, name })
+    .select('*')
+    .single()
+  if (error) {
+    console.error('createProduct', error)
+    return null
+  }
+  return data
 }

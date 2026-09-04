@@ -1,19 +1,26 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import type { Item, ItemStatus } from '@/types/database'
 import { STATUS_LABELS } from '@/types/database'
-import { DEMO_ITEMS, DEMO_FEEDBACK } from '@/lib/demo-data'
+import { DEMO_ITEMS, DEMO_FEEDBACK, DEMO_PRODUCTS } from '@/lib/demo-data'
 import { ItemDetail } from '@/components/ItemDetail'
 
 const COLUMNS: ItemStatus[] = ['now', 'next', 'later']
 
 export function HomepageBoard() {
   const [items, setItems] = useState<Item[]>(DEMO_ITEMS)
+  const [activeProductId, setActiveProductId] = useState(DEMO_PRODUCTS[0]?.id ?? '')
   const [selected, setSelected] = useState<Item | null>(null)
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dragOverStatus, setDragOverStatus] = useState<ItemStatus | null>(null)
   const dragItemId = useRef<string | null>(null)
+
+  const activeProduct = DEMO_PRODUCTS.find((p) => p.id === activeProductId)
+  const productItems = useMemo(
+    () => items.filter((i) => i.product_id === activeProductId),
+    [items, activeProductId]
+  )
 
   const moveItem = useCallback((id: string, status: ItemStatus) => {
     setItems((prev) => prev.map((i) => (i.id === id ? { ...i, status } : i)))
@@ -45,7 +52,6 @@ export function HomepageBoard() {
   }
 
   function onDragLeave(e: React.DragEvent) {
-    // Only clear when leaving the column container itself
     if (e.currentTarget === e.target) setDragOverStatus(null)
   }
 
@@ -58,32 +64,59 @@ export function HomepageBoard() {
     dragItemId.current = null
   }
 
-  const ideas = items.filter((i) => i.status === 'idea')
-  const done = items.filter((i) => i.status === 'done')
+  const done = productItems.filter((i) => i.status === 'done')
 
   return (
     <div className="bg-zinc-50 border border-zinc-200 rounded-2xl overflow-hidden shadow-sm">
       <div className="h-11 border-b border-zinc-200 bg-white flex items-center justify-between px-4">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium text-zinc-900">Acme Product</span>
+          <span className="font-medium text-zinc-900">Acme Product Org</span>
           <span className="text-zinc-300">/</span>
-          <span className="text-zinc-500">Roadmap</span>
+          <span className="text-zinc-500">Products</span>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
-            Interactive demo
-          </span>
-          <span className="text-xs text-zinc-500">Ideas {ideas.length}</span>
-        </div>
+        <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
+          Interactive demo
+        </span>
+      </div>
+
+      {/* Product switcher */}
+      <div className="bg-white border-b border-zinc-100 px-3 py-2 flex gap-2 overflow-x-auto">
+        {DEMO_PRODUCTS.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => {
+              setActiveProductId(p.id)
+              setSelected(null)
+            }}
+            className={`shrink-0 flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg border transition ${
+              p.id === activeProductId
+                ? 'bg-zinc-900 text-white border-zinc-900'
+                : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-300'
+            }`}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{
+                backgroundColor: p.id === activeProductId ? '#fff' : p.color,
+              }}
+            />
+            {p.name}
+          </button>
+        ))}
       </div>
 
       <div className="p-4 md:p-6">
-        <p className="text-xs text-zinc-500 mb-4">
-          Drag cards between columns, or click to open detail & feedback.
+        {activeProduct?.description && (
+          <p className="text-xs text-zinc-500 mb-4">{activeProduct.description}</p>
+        )}
+        <p className="text-xs text-zinc-400 mb-4">
+          Switch products above. Each has its own Now / Next / Later board — drag cards or click
+          for feedback.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
           {COLUMNS.map((status) => {
-            const colItems = items
+            const colItems = productItems
               .filter((i) => i.status === status)
               .sort((a, b) => a.sort_order - b.sort_order)
             const isOver = dragOverStatus === status
@@ -94,9 +127,7 @@ export function HomepageBoard() {
                 onDragLeave={onDragLeave}
                 onDrop={(e) => onDrop(e, status)}
                 className={`rounded-xl p-2 min-h-[140px] transition-colors ${
-                  isOver
-                    ? 'bg-zinc-200/80 ring-2 ring-zinc-400 ring-inset'
-                    : 'bg-transparent'
+                  isOver ? 'bg-zinc-200/80 ring-2 ring-zinc-400 ring-inset' : ''
                 }`}
               >
                 <h3 className="text-[11px] font-semibold uppercase tracking-wider text-zinc-500 mb-2 px-1">
@@ -111,7 +142,7 @@ export function HomepageBoard() {
                       onDragStart={(e) => onDragStart(e, item.id)}
                       onDragEnd={onDragEnd}
                       onClick={() => setSelected(item)}
-                      className={`w-full text-left group bg-white border border-zinc-200 rounded-lg p-3 shadow-sm hover:border-zinc-300 transition cursor-grab active:cursor-grabbing ${
+                      className={`w-full text-left bg-white border border-zinc-200 rounded-lg p-3 shadow-sm hover:border-zinc-300 transition cursor-grab active:cursor-grabbing ${
                         draggingId === item.id ? 'opacity-40' : ''
                       }`}
                     >
@@ -151,11 +182,7 @@ export function HomepageBoard() {
               {done.map((item) => (
                 <span
                   key={item.id}
-                  draggable
-                  onDragStart={(e) => onDragStart(e, item.id)}
-                  onDragEnd={onDragEnd}
-                  className="text-xs text-zinc-500 bg-white border border-zinc-100 rounded-md px-2.5 py-1 line-through decoration-zinc-300 cursor-grab"
-                  title="Drag back to a column"
+                  className="text-xs text-zinc-500 bg-white border border-zinc-100 rounded-md px-2.5 py-1 line-through decoration-zinc-300"
                 >
                   {item.title}
                 </span>

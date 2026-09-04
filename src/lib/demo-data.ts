@@ -1,12 +1,48 @@
-import type { Item, Feedback } from '@/types/database'
+import type { Item, Feedback, Product } from '@/types/database'
 
-/** Rich PM-oriented demo so visitors instantly see Kelly's job */
-export const DEMO_WORKSPACE_NAME = 'Acme Product'
+export const DEMO_WORKSPACE_NAME = 'Acme Product Org'
+
+export const DEMO_PRODUCTS: Product[] = [
+  {
+    id: 'prod-mobile',
+    workspace_id: 'demo',
+    name: 'Mobile checkout',
+    description: 'Conversion and payments on iOS/Android web',
+    color: '#6366f1',
+    status: 'active',
+    sort_order: 0,
+    created_at: '2026-07-01T10:00:00Z',
+    updated_at: '2026-09-01T10:00:00Z',
+  },
+  {
+    id: 'prod-platform',
+    workspace_id: 'demo',
+    name: 'Platform & billing',
+    description: 'Plans, upgrades, admin analytics',
+    color: '#0ea5e9',
+    status: 'active',
+    sort_order: 1,
+    created_at: '2026-07-01T10:00:00Z',
+    updated_at: '2026-09-01T10:00:00Z',
+  },
+  {
+    id: 'prod-growth',
+    workspace_id: 'demo',
+    name: 'Activation & growth',
+    description: 'Onboarding, NPS, public roadmap',
+    color: '#10b981',
+    status: 'active',
+    sort_order: 2,
+    created_at: '2026-07-01T10:00:00Z',
+    updated_at: '2026-09-01T10:00:00Z',
+  },
+]
 
 export const DEMO_ITEMS: Item[] = [
   {
     id: 'demo-1',
     workspace_id: 'demo',
+    product_id: 'prod-mobile',
     goal_id: null,
     title: 'Reduce checkout drop-off on mobile',
     description:
@@ -20,8 +56,39 @@ export const DEMO_ITEMS: Item[] = [
     updated_at: '2026-09-01T10:00:00Z',
   },
   {
+    id: 'demo-1b',
+    workspace_id: 'demo',
+    product_id: 'prod-mobile',
+    goal_id: null,
+    title: 'Apple Pay & Google Pay on web checkout',
+    description: 'One-tap pay for returning mobile users.',
+    status: 'next',
+    priority: 'high',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-08-21T10:00:00Z',
+    updated_at: '2026-08-21T10:00:00Z',
+  },
+  {
+    id: 'demo-1c',
+    workspace_id: 'demo',
+    product_id: 'prod-mobile',
+    goal_id: null,
+    title: 'Saved addresses for mobile',
+    description: 'Reduce form fields on repeat purchase.',
+    status: 'later',
+    priority: 'medium',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-08-22T10:00:00Z',
+    updated_at: '2026-08-22T10:00:00Z',
+  },
+  {
     id: 'demo-2',
     workspace_id: 'demo',
+    product_id: 'prod-platform',
     goal_id: null,
     title: 'Self-serve plan upgrade flow',
     description:
@@ -29,14 +96,47 @@ export const DEMO_ITEMS: Item[] = [
     status: 'now',
     priority: 'high',
     owner_id: null,
-    sort_order: 1,
+    sort_order: 0,
     created_by: null,
     created_at: '2026-08-22T10:00:00Z',
     updated_at: '2026-09-02T10:00:00Z',
   },
   {
+    id: 'demo-6',
+    workspace_id: 'demo',
+    product_id: 'prod-platform',
+    goal_id: null,
+    title: 'Workspace-level analytics for admins',
+    description:
+      'Enterprise prospects ask for usage dashboards before signing. Parked until Q4 capacity.',
+    status: 'later',
+    priority: 'low',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-07-15T10:00:00Z',
+    updated_at: '2026-08-10T10:00:00Z',
+  },
+  {
+    id: 'demo-8',
+    workspace_id: 'demo',
+    product_id: 'prod-platform',
+    goal_id: null,
+    title: 'Slack integration for feedback intake',
+    description:
+      'Sales and CS drop feature asks in #product-feedback. Pull them into Kelly instead of a spreadsheet.',
+    status: 'idea',
+    priority: 'medium',
+    owner_id: null,
+    sort_order: 0,
+    created_by: null,
+    created_at: '2026-09-02T10:00:00Z',
+    updated_at: '2026-09-02T10:00:00Z',
+  },
+  {
     id: 'demo-3',
     workspace_id: 'demo',
+    product_id: 'prod-growth',
     goal_id: null,
     title: 'In-app NPS after key activation moment',
     description:
@@ -52,6 +152,7 @@ export const DEMO_ITEMS: Item[] = [
   {
     id: 'demo-4',
     workspace_id: 'demo',
+    product_id: 'prod-growth',
     goal_id: null,
     title: 'Public roadmap page for customers',
     description:
@@ -67,36 +168,23 @@ export const DEMO_ITEMS: Item[] = [
   {
     id: 'demo-5',
     workspace_id: 'demo',
+    product_id: 'prod-growth',
     goal_id: null,
     title: 'AI draft for weekly stakeholder update',
     description:
       'PMs spend 45+ min/week writing status. One-click draft from current board state.',
-    status: 'next',
+    status: 'now',
     priority: 'high',
     owner_id: null,
-    sort_order: 2,
+    sort_order: 0,
     created_by: null,
     created_at: '2026-08-30T10:00:00Z',
     updated_at: '2026-08-30T10:00:00Z',
   },
   {
-    id: 'demo-6',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Workspace-level analytics for admins',
-    description:
-      'Enterprise prospects ask for usage dashboards before signing. Parked until Q4 capacity.',
-    status: 'later',
-    priority: 'low',
-    owner_id: null,
-    sort_order: 0,
-    created_by: null,
-    created_at: '2026-07-15T10:00:00Z',
-    updated_at: '2026-08-10T10:00:00Z',
-  },
-  {
     id: 'demo-7',
     workspace_id: 'demo',
+    product_id: 'prod-growth',
     goal_id: null,
     title: 'Dark mode for the web app',
     description:
@@ -110,23 +198,9 @@ export const DEMO_ITEMS: Item[] = [
     updated_at: '2026-09-01T10:00:00Z',
   },
   {
-    id: 'demo-8',
-    workspace_id: 'demo',
-    goal_id: null,
-    title: 'Slack integration for feedback intake',
-    description:
-      'Sales and CS drop feature asks in #product-feedback. Pull them into Kelly instead of a spreadsheet.',
-    status: 'idea',
-    priority: 'medium',
-    owner_id: null,
-    sort_order: 1,
-    created_by: null,
-    created_at: '2026-09-02T10:00:00Z',
-    updated_at: '2026-09-02T10:00:00Z',
-  },
-  {
     id: 'demo-9',
     workspace_id: 'demo',
+    product_id: 'prod-growth',
     goal_id: null,
     title: 'Onboarding checklist v1',
     description:

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useEffect, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { Item, ItemStatus } from '@/types/database'
+import type { Item, ItemStatus, Product } from '@/types/database'
 import { STATUS_LABELS } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -12,9 +12,12 @@ import {
   createItem,
   updateItemStatus,
   updateItem,
+  fetchProducts,
+  createProduct,
 } from '@/lib/items'
 import { ItemDetail } from '@/components/ItemDetail'
-import { DEMO_ITEMS } from '@/lib/demo-data'
+import { ProductSidebar } from '@/components/ProductSidebar'
+import { DEMO_ITEMS, DEMO_PRODUCTS } from '@/lib/demo-data'
 import {
   isKellyPmSession,
   endKellyPmSession,
@@ -22,6 +25,9 @@ import {
   localCreateItem,
   localUpdateStatus,
   localUpdateItem,
+  localCreateProduct,
+  getActiveProductId,
+  setActiveProductId,
 } from '@/lib/local-workspace'
 
 const COLUMNS: ItemStatus[] = ['now', 'next', 'later']
@@ -206,6 +212,8 @@ type Mode = 'loading' | 'demo' | 'kelly-pm' | 'supabase'
 export default function DashboardPage() {
   const router = useRouter()
   const [items, setItems] = useState<Item[]>([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [activeProductId, setActiveProductIdState] = useState<string | null>(null)
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('loading')
   const [userEmail, setUserEmail] = useState<string | null>(null)
@@ -216,15 +224,28 @@ export default function DashboardPage() {
   const [dragOverStatus, setDragOverStatus] = useState<ItemStatus | null>(null)
   const dragItemId = useRef<string | null>(null)
 
+  const selectProduct = useCallback((id: string) => {
+    setActiveProductIdState(id)
+    setActiveProductId(id)
+    setSelected(null)
+  }, [])
+
   useEffect(() => {
     let cancelled = false
 
     async function init() {
-      // Kelly PM local full-feature session
       if (isKellyPmSession()) {
         const ws = loadWorkspace()
         if (!cancelled) {
+          setProducts(ws.products)
           setItems(ws.items)
+          const saved = getActiveProductId()
+          const id =
+            saved && ws.products.some((p) => p.id === saved)
+              ? saved
+              : ws.products[0]?.id ?? null
+          setActiveProductIdState(id)
+          if (id) setActiveProductId(id)
           setMode('kelly-pm')
           setUserEmail('Kelly PM')
         }
@@ -240,7 +261,9 @@ export default function DashboardPage() {
         if (!user) {
           if (!cancelled) {
             setMode('demo')
+            setProducts(DEMO_PRODUCTS)
             setItems(DEMO_ITEMS)
+            setActiveProductIdState(DEMO_PRODUCTS[0]?.id ?? null)
           }
           return
         }
@@ -251,21 +274,31 @@ export default function DashboardPage() {
         if (!wsId) {
           if (!cancelled) {
             setMode('demo')
+            setProducts(DEMO_PRODUCTS)
             setItems(DEMO_ITEMS)
+            setActiveProductIdState(DEMO_PRODUCTS[0]?.id ?? null)
           }
           return
         }
 
-        const remote = await fetchItems(wsId)
+        const [remoteProducts, remoteItems] = await Promise.all([
+          fetchProducts(wsId),
+          fetchItems(wsId),
+        ])
         if (!cancelled) {
           setWorkspaceId(wsId)
           setMode('supabase')
-          setItems(remote.length > 0 ? remote : [])
+          const prods = (remoteProducts as Product[]) || []
+          setProducts(prods)
+          setItems(remoteItems)
+          setActiveProductIdState(prods[0]?.id ?? null)
         }
       } catch {
         if (!cancelled) {
           setMode('demo')
+          setProducts(DEMO_PRODUCTS)
           setItems(DEMO_ITEMS)
+          setActiveProductIdState(DEMO_PRODUCTS[0]?.id ?? null)
         }
       }
     }
@@ -275,6 +308,16 @@ export default function DashboardPage() {
       cancelled = true
     }
   }, [])
+
+  const activeProduct = useMemo(
+    () => products.find((p) => p.id === activeProductId) || null,
+    [products, activeProductId]
+  )
+
+  const productItems = useMemo(
+    () => items.filter((i) => i.product_id === activeProductId),
+    [items, activeProductId]
+  )
 
   const moveItem = useCallback(
     async (id: string, status: ItemStatus) => {
@@ -292,16 +335,19 @@ export default function DashboardPage() {
 
   const addItem = useCallback(
     async (status: ItemStatus, title: string) => {
+      if (!activeProductId) return
+
       if (mode === 'kelly-pm') {
-        const created = localCreateItem(title, status)
+        const created = localCreateItem(activeProductId, title, status)
         setItems((prev) => [created, ...prev])
         return
       }
 
-      if (mode === 'demo' || !workspaceId) {
+      if (mode === 'demo') {
         const local: Item = {
           id: crypto.randomUUID(),
           workspace_id: 'demo',
+          product_id: activeProductId,
           goal_id: null,
           title,
           description: null,
@@ -317,10 +363,46 @@ export default function DashboardPage() {
         return
       }
 
-      const created = await createItem(workspaceId, title, status)
+      if (!workspaceId) return
+      const created = await createItem(workspaceId, title, status, activeProductId)
       if (created) setItems((prev) => [created, ...prev])
     },
-    [mode, workspaceId]
+    [mode, workspaceId, activeProductId]
+  )
+
+  const handleCreateProduct = useCallback(
+    async (name: string) => {
+      if (mode === 'kelly-pm') {
+        const p = localCreateProduct(name)
+        setProducts((prev) => [...prev, p])
+        selectProduct(p.id)
+        return
+      }
+      if (mode === 'demo') {
+        const p: Product = {
+          id: crypto.randomUUID(),
+          workspace_id: 'demo',
+          name,
+          description: null,
+          color: '#6366f1',
+          status: 'active',
+          sort_order: products.length,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }
+        setProducts((prev) => [...prev, p])
+        selectProduct(p.id)
+        return
+      }
+      if (workspaceId) {
+        const p = await createProduct(workspaceId, name)
+        if (p) {
+          setProducts((prev) => [...prev, p as Product])
+          selectProduct((p as Product).id)
+        }
+      }
+    },
+    [mode, products.length, selectProduct, workspaceId]
   )
 
   const handleItemUpdate = useCallback(
@@ -389,8 +471,8 @@ export default function DashboardPage() {
     void supabase.auth.signOut().then(() => router.push('/login'))
   }
 
-  const ideas = items.filter((i) => i.status === 'idea')
-  const done = items.filter((i) => i.status === 'done')
+  const ideas = productItems.filter((i) => i.status === 'idea')
+  const done = productItems.filter((i) => i.status === 'done')
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-50">
@@ -403,7 +485,15 @@ export default function DashboardPage() {
             <span className="font-semibold text-sm tracking-tight">Kelly</span>
           </Link>
           <span className="text-zinc-300">/</span>
-          <span className="text-sm text-zinc-600">Roadmap</span>
+          {activeProduct && (
+            <span className="text-sm text-zinc-600 flex items-center gap-1.5">
+              <span
+                className="w-2 h-2 rounded-full"
+                style={{ backgroundColor: activeProduct.color }}
+              />
+              {activeProduct.name}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {mode === 'demo' && (
@@ -443,80 +533,131 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="flex-1 overflow-auto p-4 md:p-6">
-        <div className="max-w-5xl mx-auto">
-          {mode === 'loading' ? (
-            <p className="text-sm text-zinc-400 py-12 text-center">Loading…</p>
-          ) : (
-            <>
-              <p className="text-sm text-zinc-500 mb-6">
-                {mode === 'demo' &&
-                  'Read-only demo sample — sign in as Kelly PM for full features that save in this browser.'}
-                {mode === 'kelly-pm' &&
-                  'Signed in as Kelly PM. Changes persist in this browser. Drag cards or click for detail & feedback.'}
-                {mode === 'supabase' &&
-                  'Your workspace. Drag cards between Now / Next / Later. Click an item for detail and feedback.'}
-              </p>
+      <div className="flex flex-1 min-h-0">
+        {mode !== 'loading' && products.length > 0 && (
+          <div className="hidden md:flex">
+            <ProductSidebar
+              products={products}
+              activeId={activeProductId}
+              items={items}
+              onSelect={selectProduct}
+              onCreate={handleCreateProduct}
+            />
+          </div>
+        )}
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                {COLUMNS.map((status) => (
-                  <Column
-                    key={status}
-                    status={status}
-                    items={items
-                      .filter((i) => i.status === status)
-                      .sort((a, b) => a.sort_order - b.sort_order)}
-                    draggingId={draggingId}
-                    isDragOver={dragOverStatus === status}
-                    onMove={moveItem}
-                    onAdd={addItem}
-                    onOpen={setSelected}
-                    onDragStart={onDragStart}
-                    onDragEnd={onDragEnd}
-                    onDragOver={onDragOver}
-                    onDragLeave={onDragLeave}
-                    onDrop={onDrop}
-                  />
-                ))}
+        {/* Mobile product switcher */}
+        {mode !== 'loading' && products.length > 0 && (
+          <div className="md:hidden absolute top-12 left-0 right-0 z-10 bg-white border-b border-zinc-200 px-3 py-2 flex gap-2 overflow-x-auto">
+            {products.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => selectProduct(p.id)}
+                className={`shrink-0 text-xs px-2.5 py-1 rounded-full border ${
+                  p.id === activeProductId
+                    ? 'bg-zinc-900 text-white border-zinc-900'
+                    : 'bg-white text-zinc-600 border-zinc-200'
+                }`}
+              >
+                {p.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <main className="flex-1 overflow-auto p-4 md:p-6 md:pt-6 pt-14">
+          <div className="max-w-5xl mx-auto">
+            {mode === 'loading' ? (
+              <p className="text-sm text-zinc-400 py-12 text-center">Loading…</p>
+            ) : !activeProduct ? (
+              <div className="text-center py-16">
+                <p className="text-sm text-zinc-500 mb-4">No products yet.</p>
+                <button
+                  onClick={() => handleCreateProduct('My first product')}
+                  className="text-sm bg-zinc-900 text-white px-4 py-2 rounded-lg"
+                >
+                  Create a product
+                </button>
               </div>
-
-              {done.length > 0 && (
-                <div className="mt-10 pt-6 border-t border-zinc-200">
-                  <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
-                    Done · {done.length}
-                  </h2>
-                  <div className="flex flex-wrap gap-2">
-                    {done.map((item) => (
-                      <div
-                        key={item.id}
-                        draggable
-                        onDragStart={(e) => onDragStart(e, item.id)}
-                        onDragEnd={onDragEnd}
-                        className="text-sm text-zinc-500 bg-white border border-zinc-100 rounded-md px-3 py-1.5 cursor-grab"
-                      >
-                        <span className="line-through decoration-zinc-300">{item.title}</span>
-                        <button
-                          onClick={() => moveItem(item.id, 'later')}
-                          className="ml-2 text-[11px] text-zinc-400 hover:text-zinc-600"
-                        >
-                          restore
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+            ) : (
+              <>
+                <div className="mb-6">
+                  <h1 className="text-lg font-semibold text-zinc-900 flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: activeProduct.color }}
+                    />
+                    {activeProduct.name}
+                  </h1>
+                  {activeProduct.description && (
+                    <p className="text-sm text-zinc-500 mt-1">{activeProduct.description}</p>
+                  )}
+                  <p className="text-xs text-zinc-400 mt-2">
+                    Each product has its own Now / Next / Later board. Switch products in the
+                    sidebar.
+                  </p>
                 </div>
-              )}
-            </>
-          )}
-        </div>
-      </main>
 
-      {ideaOpen && (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                  {COLUMNS.map((status) => (
+                    <Column
+                      key={status}
+                      status={status}
+                      items={productItems
+                        .filter((i) => i.status === status)
+                        .sort((a, b) => a.sort_order - b.sort_order)}
+                      draggingId={draggingId}
+                      isDragOver={dragOverStatus === status}
+                      onMove={moveItem}
+                      onAdd={addItem}
+                      onOpen={setSelected}
+                      onDragStart={onDragStart}
+                      onDragEnd={onDragEnd}
+                      onDragOver={onDragOver}
+                      onDragLeave={onDragLeave}
+                      onDrop={onDrop}
+                    />
+                  ))}
+                </div>
+
+                {done.length > 0 && (
+                  <div className="mt-10 pt-6 border-t border-zinc-200">
+                    <h2 className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-3">
+                      Done · {done.length}
+                    </h2>
+                    <div className="flex flex-wrap gap-2">
+                      {done.map((item) => (
+                        <div
+                          key={item.id}
+                          draggable
+                          onDragStart={(e) => onDragStart(e, item.id)}
+                          onDragEnd={onDragEnd}
+                          className="text-sm text-zinc-500 bg-white border border-zinc-100 rounded-md px-3 py-1.5 cursor-grab"
+                        >
+                          <span className="line-through decoration-zinc-300">{item.title}</span>
+                          <button
+                            onClick={() => moveItem(item.id, 'later')}
+                            className="ml-2 text-[11px] text-zinc-400 hover:text-zinc-600"
+                          >
+                            restore
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </main>
+      </div>
+
+      {ideaOpen && activeProduct && (
         <div className="fixed inset-0 z-40 flex justify-end">
           <div className="absolute inset-0 bg-black/20" onClick={() => setIdeaOpen(false)} />
           <div className="relative w-full max-w-sm bg-white shadow-xl border-l border-zinc-200 flex flex-col">
             <div className="h-12 flex items-center justify-between px-4 border-b border-zinc-200">
-              <h2 className="font-semibold text-sm">Ideas</h2>
+              <h2 className="font-semibold text-sm">Ideas · {activeProduct.name}</h2>
               <button
                 onClick={() => setIdeaOpen(false)}
                 className="text-zinc-400 hover:text-zinc-600 text-sm"
@@ -538,18 +679,12 @@ export default function DashboardPage() {
                 placeholder="Capture an idea…"
                 className="w-full text-sm border border-zinc-200 rounded-lg px-3 py-2 outline-none focus:border-zinc-400"
               />
-              <p className="text-[11px] text-zinc-400 mt-1.5">Press Enter to add</p>
             </div>
             <div className="flex-1 overflow-auto p-4 space-y-2">
-              {ideas.length === 0 && (
-                <p className="text-sm text-zinc-400 text-center py-8">
-                  No ideas yet. Dump anything here.
-                </p>
-              )}
               {ideas.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-zinc-50 border border-zinc-100 rounded-lg p-3 cursor-pointer hover:border-zinc-200"
+                  className="bg-zinc-50 border border-zinc-100 rounded-lg p-3 cursor-pointer"
                   onClick={() => {
                     setSelected(item)
                     setIdeaOpen(false)
@@ -561,7 +696,7 @@ export default function DashboardPage() {
                       <button
                         key={s}
                         onClick={() => moveItem(item.id, s)}
-                        className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-600 hover:bg-zinc-100"
+                        className="text-[11px] px-1.5 py-0.5 rounded bg-white border border-zinc-200 text-zinc-600"
                       >
                         → {STATUS_LABELS[s]}
                       </button>

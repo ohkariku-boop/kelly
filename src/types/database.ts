@@ -14,9 +14,23 @@ export type WorkspaceMember = {
   created_at: string
 }
 
+/** A concurrent product or initiative — each has its own roadmap board */
+export type Product = {
+  id: string
+  workspace_id: string
+  name: string
+  description: string | null
+  color: string
+  status: 'active' | 'paused' | 'archived'
+  sort_order: number
+  created_at: string
+  updated_at: string
+}
+
 export type Goal = {
   id: string
   workspace_id: string
+  product_id: string | null
   title: string
   description: string | null
   metric: string | null
@@ -26,12 +40,13 @@ export type Goal = {
   updated_at: string
 }
 
-/** The only unit of work. Status is locked. */
+/** The only unit of work. Status is locked. Lives on one Product. */
 export type ItemStatus = 'idea' | 'now' | 'next' | 'later' | 'done'
 
 export type Item = {
   id: string
   workspace_id: string
+  product_id: string
   goal_id: string | null
   title: string
   description: string | null
@@ -58,6 +73,7 @@ export type Feedback = {
 export type Update = {
   id: string
   workspace_id: string
+  product_id: string | null
   title: string
   progress: string | null
   risks: string | null
@@ -84,3 +100,13 @@ export const STATUS_LABELS: Record<ItemStatus, string> = {
   later: 'Later',
   done: 'Done',
 }
+
+export const PRODUCT_COLORS = [
+  '#6366f1',
+  '#0ea5e9',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#ec4899',
+]

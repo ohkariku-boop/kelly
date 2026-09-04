@@ -22,6 +22,20 @@ create table if not exists public.workspace_members (
   unique(workspace_id, user_id)
 );
 
+
+-- Products / concurrent initiatives (each has its own roadmap)
+create table if not exists public.products (
+  id uuid primary key default uuid_generate_v4(),
+  workspace_id uuid references public.workspaces(id) on delete cascade not null,
+  name text not null,
+  description text,
+  color text default '#6366f1',
+  status text default 'active' check (status in ('active', 'paused', 'archived')),
+  sort_order integer default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
 -- Goals (optional — lightweight framing, not required)
 create table if not exists public.goals (
   id uuid primary key default uuid_generate_v4(),
@@ -40,6 +54,7 @@ create table if not exists public.goals (
 create table if not exists public.items (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
+  product_id uuid references public.products(id) on delete cascade,
   goal_id uuid references public.goals(id) on delete set null,
   title text not null,
   description text,
@@ -141,6 +156,12 @@ exception when duplicate_object then null; end $$;
 
 do $$ begin
   create policy "members_insert" on public.workspace_members for insert with check (true);
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  do $$ begin
+  create policy "products_all" on public.products for all
+    using (exists (select 1 from public.workspace_members where workspace_id = products.workspace_id and user_id = auth.uid()));
 exception when duplicate_object then null; end $$;
 
 do $$ begin
