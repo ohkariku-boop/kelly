@@ -47,9 +47,15 @@ export function loadWorkspace(): LocalWorkspace {
     if (!parsed.products?.length) {
       parsed.products = structuredClone(DEMO_PRODUCTS)
     }
+    parsed.products = (parsed.products || []).map((pr) => ({
+      ...pr,
+      horizon: pr.horizon ?? null,
+    }))
     parsed.items = (parsed.items || []).map((i) => ({
       ...i,
       product_id: i.product_id || parsed.products[0]?.id || 'prod-mobile',
+      owner_name: i.owner_name ?? null,
+      target_date: i.target_date ?? null,
     }))
     return parsed
   } catch {
@@ -83,6 +89,7 @@ export function localCreateProduct(name: string, description?: string): Product 
     workspace_id: 'kelly-pm',
     name: name.trim(),
     description: description?.trim() || null,
+    horizon: null,
     color,
     status: 'active',
     sort_order: ws.products.length,
@@ -111,6 +118,8 @@ export function localCreateItem(
     status,
     priority: 'none',
     owner_id: null,
+    owner_name: null,
+    target_date: null,
     sort_order: 0,
     created_by: 'kelly-pm',
     created_at: new Date().toISOString(),
@@ -132,7 +141,7 @@ export function localUpdateStatus(id: string, status: ItemStatus) {
 export function localUpdateItem(
   id: string,
   patch: Partial<
-    Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'product_id'>
+    Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'product_id' | 'owner_name' | 'target_date'>
   >
 ) {
   const ws = loadWorkspace()
@@ -167,4 +176,17 @@ export function localAddFeedback(
 
 export function localGetFeedback(itemId: string): Feedback[] {
   return loadWorkspace().feedback[itemId] || []
+}
+
+export function localUpdateProduct(
+  id: string,
+  patch: Partial<Pick<Product, 'name' | 'description' | 'horizon' | 'color' | 'status'>>
+) {
+  const ws = loadWorkspace()
+  ws.products = ws.products.map((p) =>
+    p.id === id
+      ? { ...p, ...patch, updated_at: new Date().toISOString() }
+      : p
+  )
+  saveWorkspace(ws)
 }

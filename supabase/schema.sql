@@ -207,3 +207,9 @@ create index if not exists idx_items_workspace_status on public.items(workspace_
 create index if not exists idx_items_sort on public.items(workspace_id, status, sort_order);
 create index if not exists idx_feedback_item on public.feedback(item_id);
 create index if not exists idx_workspace_members_user on public.workspace_members(user_id);
+
+
+-- Additive columns for owner / target / product horizon (run if upgrading)
+alter table public.items add column if not exists owner_name text;
+alter table public.items add column if not exists target_date date;
+alter table public.products add column if not exists horizon text;

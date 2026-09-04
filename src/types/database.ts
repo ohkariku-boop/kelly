@@ -20,6 +20,8 @@ export type Product = {
   workspace_id: string
   name: string
   description: string | null
+  /** Soft meaning of "Now" for this product, e.g. "This quarter" */
+  horizon: string | null
   color: string
   status: 'active' | 'paused' | 'archived'
   sort_order: number
@@ -52,7 +54,12 @@ export type Item = {
   description: string | null
   status: ItemStatus
   priority: 'urgent' | 'high' | 'medium' | 'low' | 'none'
+  /** Auth user id when available */
   owner_id: string | null
+  /** DRI display name — who is accountable for the outcome */
+  owner_name: string | null
+  /** Optional target date (ISO date YYYY-MM-DD). Soft aim, not a hard deadline. */
+  target_date: string | null
   sort_order: number
   created_by: string | null
   created_at: string

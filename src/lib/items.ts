@@ -107,7 +107,7 @@ export async function updateItemStatus(
 
 export async function updateItem(
   id: string,
-  patch: Partial<Pick<Item, 'title' | 'description' | 'status' | 'priority'>>
+  patch: Partial<Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'owner_name' | 'target_date'>>
 ): Promise<boolean> {
   const supabase = createClient()
   const { error } = await supabase

@@ -18,6 +18,8 @@ import {
 import { ItemDetail } from '@/components/ItemDetail'
 import { ProductSidebar } from '@/components/ProductSidebar'
 import { DEMO_ITEMS, DEMO_PRODUCTS } from '@/lib/demo-data'
+import { initials, formatTargetDate } from '@/lib/format'
+import { localUpdateProduct } from '@/lib/local-workspace'
 import {
   isKellyPmSession,
   endKellyPmSession,
@@ -61,8 +63,23 @@ function ItemCard({
       {item.description && (
         <p className="text-xs text-zinc-500 mt-1 line-clamp-2">{item.description}</p>
       )}
+      <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500">
+        {item.owner_name ? (
+          <span className="inline-flex items-center gap-1">
+            <span className="w-4 h-4 rounded-full bg-zinc-800 text-white flex items-center justify-center text-[8px] font-semibold">
+              {initials(item.owner_name)}
+            </span>
+            {item.owner_name}
+          </span>
+        ) : item.status === 'now' ? (
+          <span className="text-amber-600">No owner</span>
+        ) : null}
+        {item.target_date && (
+          <span className="text-zinc-400">· {formatTargetDate(item.target_date)}</span>
+        )}
+      </div>
       <div
-        className="mt-3 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition"
+        className="mt-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition"
         onClick={(e) => e.stopPropagation()}
       >
         {COLUMNS.filter((s) => s !== item.status).map((s) => (
@@ -354,6 +371,8 @@ export default function DashboardPage() {
           status,
           priority: 'none',
           owner_id: null,
+          owner_name: null,
+          target_date: null,
           sort_order: 0,
           created_by: null,
           created_at: new Date().toISOString(),
@@ -384,6 +403,7 @@ export default function DashboardPage() {
           workspace_id: 'demo',
           name,
           description: null,
+          horizon: null,
           color: '#6366f1',
           status: 'active',
           sort_order: products.length,
@@ -416,6 +436,8 @@ export default function DashboardPage() {
           description: updated.description,
           status: updated.status,
           priority: updated.priority,
+          owner_name: updated.owner_name,
+          target_date: updated.target_date,
         })
       } else if (mode === 'supabase') {
         await updateItem(updated.id, {
@@ -423,6 +445,8 @@ export default function DashboardPage() {
           description: updated.description,
           status: updated.status,
           priority: updated.priority,
+          owner_name: updated.owner_name,
+          target_date: updated.target_date,
         })
       }
     },
@@ -592,10 +616,34 @@ export default function DashboardPage() {
                   {activeProduct.description && (
                     <p className="text-sm text-zinc-500 mt-1">{activeProduct.description}</p>
                   )}
-                  <p className="text-xs text-zinc-400 mt-2">
-                    Each product has its own Now / Next / Later board. Switch products in the
-                    sidebar.
-                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-medium uppercase tracking-wider text-zinc-400">
+                      Horizon
+                    </span>
+                    {mode === 'kelly-pm' || mode === 'demo' ? (
+                      <input
+                        key={activeProduct.id}
+                        defaultValue={activeProduct.horizon || ''}
+                        placeholder='e.g. "Now ≈ this quarter"'
+                        onBlur={(e) => {
+                          const horizon = e.target.value.trim() || null
+                          setProducts((prev) =>
+                            prev.map((p) =>
+                              p.id === activeProduct.id ? { ...p, horizon } : p
+                            )
+                          )
+                          if (mode === 'kelly-pm') {
+                            localUpdateProduct(activeProduct.id, { horizon })
+                          }
+                        }}
+                        className="text-sm text-zinc-600 bg-transparent border-b border-dashed border-zinc-300 focus:border-zinc-500 outline-none min-w-[12rem] max-w-md"
+                      />
+                    ) : (
+                      <span className="text-sm text-zinc-600">
+                        {activeProduct.horizon || '—'}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">

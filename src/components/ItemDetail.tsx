@@ -5,7 +5,12 @@ import type { Item, ItemStatus, Feedback } from '@/types/database'
 import { STATUS_LABELS, ITEM_STATUSES } from '@/types/database'
 import { updateItem, fetchFeedback, addFeedback } from '@/lib/items'
 import { DEMO_FEEDBACK } from '@/lib/demo-data'
-import { localAddFeedback, localGetFeedback, localUpdateItem } from '@/lib/local-workspace'
+import {
+  localAddFeedback,
+  localGetFeedback,
+  localUpdateItem,
+} from '@/lib/local-workspace'
+import { initials } from '@/lib/format'
 
 type Props = {
   item: Item
@@ -28,6 +33,8 @@ export function ItemDetail({
 }: Props) {
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description || '')
+  const [ownerName, setOwnerName] = useState(item.owner_name || '')
+  const [targetDate, setTargetDate] = useState(item.target_date || '')
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [fbDraft, setFbDraft] = useState('')
   const [saving, setSaving] = useState(false)
@@ -36,6 +43,8 @@ export function ItemDetail({
   useEffect(() => {
     setTitle(item.title)
     setDescription(item.description || '')
+    setOwnerName(item.owner_name || '')
+    setTargetDate(item.target_date || '')
     if (kellyPmMode) {
       setFeedback(localGetFeedback(item.id))
     } else if (!demoMode && workspaceId) {
@@ -43,18 +52,31 @@ export function ItemDetail({
     } else {
       setFeedback(DEMO_FEEDBACK[item.id] || [])
     }
-  }, [item.id, item.title, item.description, demoMode, workspaceId, kellyPmMode])
+  }, [
+    item.id,
+    item.title,
+    item.description,
+    item.owner_name,
+    item.target_date,
+    demoMode,
+    workspaceId,
+    kellyPmMode,
+  ])
 
   async function saveMeta() {
-    const next = {
+    const next: Item = {
       ...item,
       title: title.trim() || item.title,
       description: description.trim() || null,
+      owner_name: ownerName.trim() || null,
+      target_date: targetDate.trim() || null,
     }
     if (kellyPmMode) {
       localUpdateItem(item.id, {
         title: next.title,
         description: next.description,
+        owner_name: next.owner_name,
+        target_date: next.target_date,
       })
       onUpdate(next)
       return
@@ -67,6 +89,8 @@ export function ItemDetail({
     const ok = await updateItem(item.id, {
       title: next.title,
       description: next.description,
+      owner_name: next.owner_name,
+      target_date: next.target_date,
     })
     setSaving(false)
     if (ok) onUpdate(next)
@@ -109,11 +133,12 @@ export function ItemDetail({
     }
   }
 
+  const showOwnerHint = item.status === 'now' && !ownerName.trim()
+
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div className="absolute inset-0 bg-black/25" onClick={onClose} />
       <div className="relative w-full max-w-md bg-white shadow-2xl border-l border-zinc-200 flex flex-col h-full">
-        {/* Header */}
         <div className="h-12 flex items-center justify-between px-4 border-b border-zinc-200 shrink-0">
           <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
             Item
@@ -127,7 +152,6 @@ export function ItemDetail({
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-5">
-          {/* Title */}
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -136,7 +160,51 @@ export function ItemDetail({
             placeholder="Title"
           />
 
-          {/* Status */}
+          {/* Owner + target */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                Owner (DRI)
+              </p>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 ${
+                    ownerName.trim()
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-400'
+                  }`}
+                >
+                  {initials(ownerName || null)}
+                </span>
+                <input
+                  value={ownerName}
+                  onChange={(e) => setOwnerName(e.target.value)}
+                  onBlur={saveMeta}
+                  placeholder="Name"
+                  className="flex-1 text-sm border border-zinc-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-zinc-400"
+                />
+              </div>
+              {showOwnerHint && (
+                <p className="text-[11px] text-amber-700 mt-1">
+                  Now items work better with a clear owner.
+                </p>
+              )}
+            </div>
+            <div>
+              <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
+                Target date
+              </p>
+              <input
+                type="date"
+                value={targetDate}
+                onChange={(e) => setTargetDate(e.target.value)}
+                onBlur={saveMeta}
+                className="w-full text-sm border border-zinc-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-zinc-400 text-zinc-700"
+              />
+              <p className="text-[11px] text-zinc-400 mt-1">Optional — soft aim, not a deadline.</p>
+            </div>
+          </div>
+
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
               Status
@@ -158,7 +226,6 @@ export function ItemDetail({
             </div>
           </div>
 
-          {/* Description */}
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
               Description
@@ -176,7 +243,6 @@ export function ItemDetail({
             )}
           </div>
 
-          {/* Feedback */}
           <div>
             <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
               Feedback

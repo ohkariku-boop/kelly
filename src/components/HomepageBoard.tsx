@@ -5,6 +5,7 @@ import type { Item, ItemStatus } from '@/types/database'
 import { STATUS_LABELS } from '@/types/database'
 import { DEMO_ITEMS, DEMO_FEEDBACK, DEMO_PRODUCTS } from '@/lib/demo-data'
 import { ItemDetail } from '@/components/ItemDetail'
+import { initials, formatTargetDate } from '@/lib/format'
 
 const COLUMNS: ItemStatus[] = ['now', 'next', 'later']
 
@@ -108,7 +109,12 @@ export function HomepageBoard() {
 
       <div className="p-4 md:p-6">
         {activeProduct?.description && (
-          <p className="text-xs text-zinc-500 mb-4">{activeProduct.description}</p>
+          <p className="text-xs text-zinc-500 mb-1">{activeProduct.description}</p>
+        )}
+        {activeProduct?.horizon && (
+          <p className="text-xs text-zinc-400 mb-4">
+            <span className="font-medium text-zinc-500">Horizon:</span> {activeProduct.horizon}
+          </p>
         )}
         <p className="text-xs text-zinc-400 mb-4">
           Switch products above. Each has its own Now / Next / Later board — drag cards or click
@@ -154,8 +160,24 @@ export function HomepageBoard() {
                           {item.description}
                         </p>
                       )}
+                      <div className="mt-2 flex items-center gap-2 text-[11px] text-zinc-500">
+                        {item.owner_name ? (
+                          <span className="inline-flex items-center gap-1">
+                            <span className="w-4 h-4 rounded-full bg-zinc-800 text-white flex items-center justify-center text-[8px] font-semibold">
+                              {initials(item.owner_name)}
+                            </span>
+                            {item.owner_name}
+                          </span>
+                        ) : null}
+                        {item.target_date && (
+                          <span className="text-zinc-400">
+                            {item.owner_name ? '· ' : ''}
+                            {formatTargetDate(item.target_date)}
+                          </span>
+                        )}
+                      </div>
                       {DEMO_FEEDBACK[item.id]?.length ? (
-                        <p className="text-[11px] text-amber-700 mt-2">
+                        <p className="text-[11px] text-amber-700 mt-1.5">
                           {DEMO_FEEDBACK[item.id].length} feedback note
                           {DEMO_FEEDBACK[item.id].length > 1 ? 's' : ''}
                         </p>
