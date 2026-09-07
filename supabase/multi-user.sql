@@ -1,10 +1,9 @@
--- Kelly multi-user infrastructure
--- Run after schema.sql (or together in SQL editor)
+-- Kelly multi-user (run AFTER schema.sql)
+-- Profiles, invitations, accept_invitation
 
 create extension if not exists "uuid-ossp";
 create extension if not exists "pgcrypto";
 
--- Profiles (display info for members)
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -15,21 +14,20 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
-do $$ begin
-  create policy "profiles_select" on public.profiles for select using (true);
-exception when duplicate_object then null; end $$;
+drop policy if exists "profiles_select" on public.profiles;
+create policy "profiles_select" on public.profiles for select using (true);
 
-do $$ begin
-  create policy "profiles_upsert_own" on public.profiles for all
-    using (id = auth.uid()) with check (id = auth.uid());
-exception when duplicate_object then null; end $$;
+drop policy if exists "profiles_upsert_own" on public.profiles;
+create policy "profiles_upsert_own" on public.profiles for all
+  using (id = auth.uid())
+  with check (id = auth.uid());
 
--- Auto-create profile on signup
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
-security definer set search_path = public
-as $$
+security definer
+set search_path = public
+as $fn$
 begin
   insert into public.profiles (id, email, full_name)
   values (
@@ -40,14 +38,13 @@ begin
   on conflict (id) do update set email = excluded.email;
   return new;
 end;
-$$;
+$fn$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- Invitations
 create table if not exists public.invitations (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -58,88 +55,54 @@ create table if not exists public.invitations (
   status text not null default 'pending'
     check (status in ('pending', 'accepted', 'revoked', 'expired')),
   created_at timestamptz default now(),
-  expires_at timestamptz default (now() + interval '14 days'),
-  unique (workspace_id, email, status)
+  expires_at timestamptz default (now() + interval '14 days')
 );
 
--- Allow multiple invites history: drop strict unique if conflicts; use partial unique
-drop index if exists invitations_workspace_id_email_status_key;
 create unique index if not exists invitations_pending_email
   on public.invitations (workspace_id, lower(email))
   where status = 'pending';
 
 alter table public.invitations enable row level security;
 
--- Members can read invites in their workspace; owners manage
-do $$ begin
-  create policy "invitations_select" on public.invitations for select
-    using (
-      exists (
-        select 1 from public.workspace_members m
-        where m.workspace_id = invitations.workspace_id and m.user_id = auth.uid()
-      )
-      or lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
-    );
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create policy "invitations_insert" on public.invitations for insert
-    with check (
-      exists (
-        select 1 from public.workspace_members m
-        where m.workspace_id = invitations.workspace_id
-          and m.user_id = auth.uid()
-          and m.role in ('owner', 'member')
-      )
-    );
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create policy "invitations_update" on public.invitations for update
-    using (
-      exists (
-        select 1 from public.workspace_members m
-        where m.workspace_id = invitations.workspace_id
-          and m.user_id = auth.uid()
-          and m.role = 'owner'
-      )
-      or lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
-    );
-exception when duplicate_object then null; end $$;
-
--- Helper: is workspace member
-create or replace function public.is_workspace_member(ws uuid)
-returns boolean
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select exists (
-    select 1 from public.workspace_members
-    where workspace_id = ws and user_id = auth.uid()
+drop policy if exists "invitations_select" on public.invitations;
+create policy "invitations_select" on public.invitations for select
+  using (
+    exists (
+      select 1 from public.workspace_members m
+      where m.workspace_id = invitations.workspace_id and m.user_id = auth.uid()
+    )
+    or lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   );
-$$;
 
-create or replace function public.workspace_role(ws uuid)
-returns text
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select role from public.workspace_members
-  where workspace_id = ws and user_id = auth.uid()
-  limit 1;
-$$;
+drop policy if exists "invitations_insert" on public.invitations;
+create policy "invitations_insert" on public.invitations for insert
+  with check (
+    exists (
+      select 1 from public.workspace_members m
+      where m.workspace_id = invitations.workspace_id
+        and m.user_id = auth.uid()
+        and m.role in ('owner', 'member')
+    )
+  );
 
--- Accept invitation (security definer so invitee can join)
+drop policy if exists "invitations_update" on public.invitations;
+create policy "invitations_update" on public.invitations for update
+  using (
+    exists (
+      select 1 from public.workspace_members m
+      where m.workspace_id = invitations.workspace_id
+        and m.user_id = auth.uid()
+        and m.role = 'owner'
+    )
+    or lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  );
+
 create or replace function public.accept_invitation(invite_token text)
 returns uuid
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $fn$
 declare
   inv public.invitations%rowtype;
   uid uuid := auth.uid();
@@ -180,40 +143,13 @@ begin
 
   return inv.workspace_id;
 end;
-$$;
+$fn$;
 
 grant execute on function public.accept_invitation(text) to authenticated;
 
--- Ensure products have horizon column
+create index if not exists idx_invitations_token on public.invitations(token);
+create index if not exists idx_invitations_email on public.invitations(lower(email));
+
 alter table public.products add column if not exists horizon text;
 alter table public.items add column if not exists owner_name text;
 alter table public.items add column if not exists target_date date;
-
--- Tighten member policies if missing select by self
-do $$ begin
-  create policy "members_select_self_or_workspace" on public.workspace_members for select
-    using (
-      user_id = auth.uid()
-      or exists (
-        select 1 from public.workspace_members m2
-        where m2.workspace_id = workspace_members.workspace_id
-          and m2.user_id = auth.uid()
-      )
-    );
-exception when duplicate_object then null; end $$;
-
-do $$ begin
-  create policy "members_delete_owner" on public.workspace_members for delete
-    using (
-      exists (
-        select 1 from public.workspace_members m
-        where m.workspace_id = workspace_members.workspace_id
-          and m.user_id = auth.uid()
-          and m.role = 'owner'
-      )
-      and workspace_members.role <> 'owner'
-    );
-exception when duplicate_object then null; end $$;
-
-create index if not exists idx_invitations_token on public.invitations(token);
-create index if not exists idx_invitations_email on public.invitations(lower(email));

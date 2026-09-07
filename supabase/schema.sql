@@ -1,7 +1,8 @@
--- Kelly Simplified Schema
--- Philosophy: fewer objects than Kaneo, PM-native, fixed statuses
+-- Kelly schema (safe to re-run)
+-- Run this first in Supabase SQL Editor
 
 create extension if not exists "uuid-ossp";
+create extension if not exists "pgcrypto";
 
 -- Workspaces
 create table if not exists public.workspaces (
@@ -12,7 +13,6 @@ create table if not exists public.workspaces (
   updated_at timestamptz default now()
 );
 
--- Workspace members
 create table if not exists public.workspace_members (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -22,13 +22,12 @@ create table if not exists public.workspace_members (
   unique(workspace_id, user_id)
 );
 
-
--- Products / concurrent initiatives (each has its own roadmap)
 create table if not exists public.products (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
   name text not null,
   description text,
+  horizon text,
   color text default '#6366f1',
   status text default 'active' check (status in ('active', 'paused', 'archived')),
   sort_order integer default 0,
@@ -36,10 +35,10 @@ create table if not exists public.products (
   updated_at timestamptz default now()
 );
 
--- Goals (optional — lightweight framing, not required)
 create table if not exists public.goals (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
+  product_id uuid references public.products(id) on delete set null,
   title text not null,
   description text,
   metric text,
@@ -49,8 +48,6 @@ create table if not exists public.goals (
   updated_at timestamptz default now()
 );
 
--- Items (the only unit of work)
--- Status is locked: idea | now | next | later | done
 create table if not exists public.items (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -63,13 +60,14 @@ create table if not exists public.items (
   priority text default 'none'
     check (priority in ('urgent', 'high', 'medium', 'low', 'none')),
   owner_id uuid references auth.users(id),
+  owner_name text,
+  target_date date,
   sort_order integer default 0,
   created_by uuid references auth.users(id),
   created_at timestamptz default now(),
   updated_at timestamptz default now()
 );
 
--- Feedback (attached to items)
 create table if not exists public.feedback (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -81,10 +79,10 @@ create table if not exists public.feedback (
   created_at timestamptz default now()
 );
 
--- Stakeholder Updates
 create table if not exists public.updates (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
+  product_id uuid references public.products(id) on delete set null,
   title text not null,
   progress text,
   risks text,
@@ -96,7 +94,6 @@ create table if not exists public.updates (
   created_at timestamptz default now()
 );
 
--- Minimal labels
 create table if not exists public.labels (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -111,7 +108,6 @@ create table if not exists public.item_labels (
   primary key (item_id, label_id)
 );
 
--- Comments
 create table if not exists public.comments (
   id uuid primary key default uuid_generate_v4(),
   workspace_id uuid references public.workspaces(id) on delete cascade not null,
@@ -123,9 +119,18 @@ create table if not exists public.comments (
   check (item_id is not null or update_id is not null)
 );
 
+-- Additive columns if upgrading an older DB
+alter table public.products add column if not exists horizon text;
+alter table public.products add column if not exists description text;
+alter table public.products add column if not exists color text default '#6366f1';
+alter table public.items add column if not exists product_id uuid references public.products(id) on delete cascade;
+alter table public.items add column if not exists owner_name text;
+alter table public.items add column if not exists target_date date;
+
 -- RLS
 alter table public.workspaces enable row level security;
 alter table public.workspace_members enable row level security;
+alter table public.products enable row level security;
 alter table public.goals enable row level security;
 alter table public.items enable row level security;
 alter table public.feedback enable row level security;
@@ -134,82 +139,144 @@ alter table public.labels enable row level security;
 alter table public.item_labels enable row level security;
 alter table public.comments enable row level security;
 
--- Policies
-do $$ begin
-  create policy "workspaces_select" on public.workspaces for select
-    using (exists (select 1 from public.workspace_members where workspace_id = workspaces.id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+-- Policies (drop + create so re-runs work)
+drop policy if exists "workspaces_select" on public.workspaces;
+create policy "workspaces_select" on public.workspaces for select
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = workspaces.id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "workspaces_insert" on public.workspaces for insert with check (true);
-exception when duplicate_object then null; end $$;
+drop policy if exists "workspaces_insert" on public.workspaces;
+create policy "workspaces_insert" on public.workspaces for insert
+  with check (auth.uid() is not null);
 
-do $$ begin
-  create policy "workspaces_update" on public.workspaces for update
-    using (exists (select 1 from public.workspace_members where workspace_id = workspaces.id and user_id = auth.uid() and role = 'owner'));
-exception when duplicate_object then null; end $$;
+drop policy if exists "workspaces_update" on public.workspaces;
+create policy "workspaces_update" on public.workspaces for update
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = workspaces.id and user_id = auth.uid() and role = 'owner'
+  ));
 
-do $$ begin
-  create policy "members_select" on public.workspace_members for select
-    using (exists (select 1 from public.workspace_members wm where wm.workspace_id = workspace_members.workspace_id and wm.user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "members_select" on public.workspace_members;
+create policy "members_select" on public.workspace_members for select
+  using (
+    user_id = auth.uid()
+    or exists (
+      select 1 from public.workspace_members wm
+      where wm.workspace_id = workspace_members.workspace_id
+        and wm.user_id = auth.uid()
+    )
+  );
 
-do $$ begin
-  create policy "members_insert" on public.workspace_members for insert with check (true);
-exception when duplicate_object then null; end $$;
+drop policy if exists "members_insert" on public.workspace_members;
+create policy "members_insert" on public.workspace_members for insert
+  with check (auth.uid() is not null);
 
-do $$ begin
-  do $$ begin
-  create policy "products_all" on public.products for all
-    using (exists (select 1 from public.workspace_members where workspace_id = products.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "members_delete" on public.workspace_members;
+create policy "members_delete" on public.workspace_members for delete
+  using (
+    exists (
+      select 1 from public.workspace_members m
+      where m.workspace_id = workspace_members.workspace_id
+        and m.user_id = auth.uid()
+        and m.role = 'owner'
+    )
+  );
 
-do $$ begin
-  create policy "goals_all" on public.goals for all
-    using (exists (select 1 from public.workspace_members where workspace_id = goals.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "products_all" on public.products;
+create policy "products_all" on public.products for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = products.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = products.workspace_id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "items_all" on public.items for all
-    using (exists (select 1 from public.workspace_members where workspace_id = items.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "goals_all" on public.goals;
+create policy "goals_all" on public.goals for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = goals.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = goals.workspace_id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "feedback_all" on public.feedback for all
-    using (exists (select 1 from public.workspace_members where workspace_id = feedback.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "items_all" on public.items;
+create policy "items_all" on public.items for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = items.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = items.workspace_id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "updates_all" on public.updates for all
-    using (exists (select 1 from public.workspace_members where workspace_id = updates.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "feedback_all" on public.feedback;
+create policy "feedback_all" on public.feedback for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = feedback.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = feedback.workspace_id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "labels_all" on public.labels for all
-    using (exists (select 1 from public.workspace_members where workspace_id = labels.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "updates_all" on public.updates;
+create policy "updates_all" on public.updates for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = updates.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = updates.workspace_id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "item_labels_all" on public.item_labels for all
-    using (exists (
-      select 1 from public.items i
-      join public.workspace_members wm on wm.workspace_id = i.workspace_id
-      where i.id = item_labels.item_id and wm.user_id = auth.uid()
-    ));
-exception when duplicate_object then null; end $$;
+drop policy if exists "labels_all" on public.labels;
+create policy "labels_all" on public.labels for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = labels.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = labels.workspace_id and user_id = auth.uid()
+  ));
 
-do $$ begin
-  create policy "comments_all" on public.comments for all
-    using (exists (select 1 from public.workspace_members where workspace_id = comments.workspace_id and user_id = auth.uid()));
-exception when duplicate_object then null; end $$;
+drop policy if exists "item_labels_all" on public.item_labels;
+create policy "item_labels_all" on public.item_labels for all
+  using (exists (
+    select 1 from public.items i
+    join public.workspace_members wm on wm.workspace_id = i.workspace_id
+    where i.id = item_labels.item_id and wm.user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.items i
+    join public.workspace_members wm on wm.workspace_id = i.workspace_id
+    where i.id = item_labels.item_id and wm.user_id = auth.uid()
+  ));
+
+drop policy if exists "comments_all" on public.comments;
+create policy "comments_all" on public.comments for all
+  using (exists (
+    select 1 from public.workspace_members
+    where workspace_id = comments.workspace_id and user_id = auth.uid()
+  ))
+  with check (exists (
+    select 1 from public.workspace_members
+    where workspace_id = comments.workspace_id and user_id = auth.uid()
+  ));
 
 create index if not exists idx_items_workspace_status on public.items(workspace_id, status);
+create index if not exists idx_items_product on public.items(product_id);
 create index if not exists idx_items_sort on public.items(workspace_id, status, sort_order);
 create index if not exists idx_feedback_item on public.feedback(item_id);
 create index if not exists idx_workspace_members_user on public.workspace_members(user_id);
-
-
--- Additive columns for owner / target / product horizon (run if upgrading)
-alter table public.items add column if not exists owner_name text;
-alter table public.items add column if not exists target_date date;
-alter table public.products add column if not exists horizon text;
+create index if not exists idx_products_workspace on public.products(workspace_id);
