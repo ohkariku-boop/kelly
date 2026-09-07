@@ -9,6 +9,7 @@ import {
   getInvitationByToken,
   ensureProfile,
 } from '@/lib/workspace'
+import { getSiteUrl } from '@/lib/site'
 
 export default function AcceptInvitePage() {
   const params = useParams()
@@ -77,7 +78,7 @@ export default function AcceptInvitePage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/invite/${token}`,
+        emailRedirectTo: `${getSiteUrl()}/auth/callback?next=${encodeURIComponent('/invite/' + token)}`,
       },
     })
     if (error) setMessage(error.message)

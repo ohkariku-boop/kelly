@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { startKellyPmSession } from '@/lib/local-workspace'
+import { authCallbackUrl } from '@/lib/site'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -28,7 +29,7 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
+        emailRedirectTo: authCallbackUrl('/dashboard'),
       },
     })
 
