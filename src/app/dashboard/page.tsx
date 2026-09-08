@@ -234,6 +234,7 @@ export default function DashboardPage() {
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('loading')
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [setupError, setSetupError] = useState<string | null>(null)
   const [selected, setSelected] = useState<Item | null>(null)
   const [ideaOpen, setIdeaOpen] = useState(false)
   const [ideaDraft, setIdeaDraft] = useState('')
@@ -285,15 +286,23 @@ export default function DashboardPage() {
           return
         }
 
-        if (!cancelled) setUserEmail(user.email ?? null)
+        if (!cancelled) {
+          setUserEmail(user.email ?? null)
+          setSetupError(null)
+        }
 
-        const wsId = await ensureWorkspace()
+        const { id: wsId, error: wsError } = await ensureWorkspace()
         if (!wsId) {
           if (!cancelled) {
-            setMode('demo')
-            setProducts(DEMO_PRODUCTS)
-            setItems(DEMO_ITEMS)
-            setActiveProductIdState(DEMO_PRODUCTS[0]?.id ?? null)
+            // Signed in but workspace bootstrap failed — do not pretend demo
+            setMode('supabase')
+            setProducts([])
+            setItems([])
+            setActiveProductIdState(null)
+            setSetupError(
+              wsError ||
+                'Could not load workspace. Run schema.sql and multi-user.sql on your Supabase project.'
+            )
           }
           return
         }
@@ -309,13 +318,22 @@ export default function DashboardPage() {
           setProducts(prods)
           setItems(remoteItems)
           setActiveProductIdState(prods[0]?.id ?? null)
+          // Seed a default product if empty workspace
+          if (prods.length === 0) {
+            const created = await createProduct(wsId, 'My product')
+            if (created) {
+              setProducts([created as Product])
+              setActiveProductIdState((created as Product).id)
+            }
+          }
         }
-      } catch {
+      } catch (e) {
         if (!cancelled) {
           setMode('demo')
           setProducts(DEMO_PRODUCTS)
           setItems(DEMO_ITEMS)
           setActiveProductIdState(DEMO_PRODUCTS[0]?.id ?? null)
+          setSetupError(e instanceof Error ? e.message : 'Unknown error')
         }
       }
     }
@@ -520,9 +538,14 @@ export default function DashboardPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {mode === 'demo' && (
+          {mode === 'demo' && !userEmail && (
             <span className="text-[11px] bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-full">
               Demo mode
+            </span>
+          )}
+          {userEmail && mode === 'supabase' && (
+            <span className="text-[11px] bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-full">
+              Signed in
             </span>
           )}
           {mode === 'kelly-pm' && (
@@ -539,28 +562,30 @@ export default function DashboardPage() {
           >
             Ideas ({ideas.length})
           </button>
-          {mode === 'supabase' && (
-            <Link
-              href="/settings/members"
-              className="text-xs text-zinc-600 hover:text-zinc-900 px-2 py-1 rounded hover:bg-zinc-100"
-            >
-              Team
-            </Link>
-          )}
-          {mode === 'demo' ? (
+          {userEmail ? (
+            <>
+              {mode === 'supabase' && (
+                <Link
+                  href="/settings/members"
+                  className="text-xs text-zinc-600 hover:text-zinc-900 px-2 py-1 rounded hover:bg-zinc-100"
+                >
+                  Team
+                </Link>
+              )}
+              <button
+                onClick={signOut}
+                className="text-xs text-zinc-500 hover:text-zinc-800 px-2 py-1"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
             <Link
               href="/login"
               className="text-xs bg-zinc-900 text-white px-3 py-1.5 rounded-md hover:bg-zinc-800"
             >
               Sign in
             </Link>
-          ) : (
-            <button
-              onClick={signOut}
-              className="text-xs text-zinc-500 hover:text-zinc-800 px-2 py-1"
-            >
-              Sign out
-            </button>
           )}
         </div>
       </header>
@@ -599,6 +624,17 @@ export default function DashboardPage() {
 
         <main className="flex-1 overflow-auto p-4 md:p-6 md:pt-6 pt-14">
           <div className="max-w-5xl mx-auto">
+            {setupError && (
+              <div className="mb-6 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+                <p className="font-medium">Workspace not ready</p>
+                <p className="mt-1 text-amber-800">{setupError}</p>
+                <p className="mt-2 text-xs text-amber-700">
+                  In Supabase SQL editor for project <code>lustugqkrtrmyyoekyui</code>, run the
+                  latest <code>multi-user.sql</code> (includes <code>create_workspace_for_me</code>),
+                  then refresh this page.
+                </p>
+              </div>
+            )}
             {mode === 'loading' ? (
               <p className="text-sm text-zinc-400 py-12 text-center">Loading…</p>
             ) : !activeProduct ? (

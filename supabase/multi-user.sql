@@ -153,3 +153,48 @@ create index if not exists idx_invitations_email on public.invitations(lower(ema
 alter table public.products add column if not exists horizon text;
 alter table public.items add column if not exists owner_name text;
 alter table public.items add column if not exists target_date date;
+
+-- Bootstrap workspace + owner membership (avoids RLS insert/returning chicken-and-egg)
+create or replace function public.create_workspace_for_me(ws_name text default 'My workspace')
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $fn$
+declare
+  uid uuid := auth.uid();
+  new_id uuid;
+  new_slug text;
+begin
+  if uid is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  -- Already a member of something?
+  select workspace_id into new_id
+  from public.workspace_members
+  where user_id = uid
+  limit 1;
+
+  if new_id is not null then
+    return new_id;
+  end if;
+
+  new_slug := 'ws-' || substr(uid::text, 1, 8) || '-' || substr(replace(gen_random_uuid()::text, '-', ''), 1, 6);
+
+  insert into public.workspaces (name, slug)
+  values (coalesce(nullif(trim(ws_name), ''), 'My workspace'), new_slug)
+  returning id into new_id;
+
+  insert into public.workspace_members (workspace_id, user_id, role)
+  values (new_id, uid, 'owner');
+
+  insert into public.profiles (id, email)
+  values (uid, (select email from auth.users where id = uid))
+  on conflict (id) do nothing;
+
+  return new_id;
+end;
+$fn$;
+
+grant execute on function public.create_workspace_for_me(text) to authenticated;

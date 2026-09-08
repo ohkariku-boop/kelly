@@ -2,48 +2,99 @@ import { createClient } from '@/lib/supabase/client'
 import type { Item, ItemStatus, Feedback } from '@/types/database'
 import { ensureProfile } from '@/lib/workspace'
 
-export async function ensureWorkspace(): Promise<string | null> {
+export async function ensureWorkspace(): Promise<{
+  id: string | null
+  error: string | null
+}> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return null
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { id: null, error: 'Not signed in' }
 
-  await ensureProfile()
+  try {
+    await ensureProfile()
+  } catch {
+    // profile table may be missing — continue
+  }
 
-  const { data: memberships } = await supabase
+  const { data: memberships, error: memReadErr } = await supabase
     .from('workspace_members')
     .select('workspace_id')
     .eq('user_id', user.id)
     .limit(1)
 
-  if (memberships && memberships.length > 0) {
-    return memberships[0].workspace_id
+  if (memReadErr) {
+    console.error('membership read', memReadErr)
+    return {
+      id: null,
+      error: memReadErr.message,
+    }
   }
 
-  // Bootstrap first workspace
-  const slug = `ws-${user.id.slice(0, 8)}`
-  const { data: ws, error: wsErr } = await supabase
-    .from('workspaces')
-    .insert({ name: 'My workspace', slug })
-    .select('id')
-    .single()
+  if (memberships && memberships.length > 0) {
+    return { id: memberships[0].workspace_id, error: null }
+  }
 
-  if (wsErr || !ws) {
+  // Prefer security-definer RPC (bypasses RLS chicken-and-egg)
+  const { data: rpcId, error: rpcErr } = await supabase.rpc(
+    'create_workspace_for_me',
+    { ws_name: 'My workspace' }
+  )
+
+  if (!rpcErr && rpcId) {
+    return { id: rpcId as string, error: null }
+  }
+
+  if (rpcErr) {
+    console.error('create_workspace_for_me', rpcErr)
+  }
+
+  // Fallback: manual insert without returning row under strict RLS
+  const slug = `ws-${user.id.slice(0, 8)}-${Math.random().toString(36).slice(2, 8)}`
+  const { error: wsErr } = await supabase.from('workspaces').insert({
+    name: 'My workspace',
+    slug,
+  })
+
+  if (wsErr) {
     console.error('workspace create', wsErr)
-    return null
+    return {
+      id: null,
+      error:
+        rpcErr?.message ||
+        wsErr.message ||
+        'Could not create workspace. Run multi-user.sql on this Supabase project.',
+    }
+  }
+
+  const { data: created } = await supabase
+    .from('workspaces')
+    .select('id')
+    .eq('slug', slug)
+    .maybeSingle()
+
+  // If select blocked by RLS, try membership path after insert by slug via rpc only
+  if (!created?.id) {
+    return {
+      id: null,
+      error:
+        'Workspace created but not readable (RLS). Run the latest multi-user.sql (create_workspace_for_me).',
+    }
   }
 
   const { error: memErr } = await supabase.from('workspace_members').insert({
-    workspace_id: ws.id,
+    workspace_id: created.id,
     user_id: user.id,
     role: 'owner',
   })
 
   if (memErr) {
     console.error('member create', memErr)
-    return null
+    return { id: null, error: memErr.message }
   }
 
-  return ws.id
+  return { id: created.id, error: null }
 }
 
 export async function fetchItems(workspaceId: string): Promise<Item[]> {
@@ -69,7 +120,9 @@ export async function createItem(
   productId?: string
 ): Promise<Item | null> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
     .from('items')
@@ -110,7 +163,12 @@ export async function updateItemStatus(
 
 export async function updateItem(
   id: string,
-  patch: Partial<Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'owner_name' | 'target_date'>>
+  patch: Partial<
+    Pick<
+      Item,
+      'title' | 'description' | 'status' | 'priority' | 'owner_name' | 'target_date'
+    >
+  >
 ): Promise<boolean> {
   const supabase = createClient()
   const { error } = await supabase
@@ -147,7 +205,9 @@ export async function addFeedback(
   source?: string
 ): Promise<Feedback | null> {
   const supabase = createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { data, error } = await supabase
     .from('feedback')
