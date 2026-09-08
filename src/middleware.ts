@@ -1,26 +1,58 @@
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-/**
- * If Supabase still redirects to Site URL with ?code= on `/`,
- * forward to our auth callback so the session can be exchanged.
- */
-export function middleware(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get('code')
-  const path = request.nextUrl.pathname
+export async function middleware(request: NextRequest) {
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  })
 
-  if (code && path !== '/auth/callback') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/callback'
-    // keep code + any other params; default next
-    if (!url.searchParams.get('next')) {
-      url.searchParams.set('next', '/dashboard')
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+  // Forward bare ?code= to auth callback (keep query string)
+  const code = request.nextUrl.searchParams.get('code')
+  if (code && request.nextUrl.pathname !== '/auth/callback') {
+    const redirectUrl = request.nextUrl.clone()
+    redirectUrl.pathname = '/auth/callback'
+    if (!redirectUrl.searchParams.get('next')) {
+      redirectUrl.searchParams.set('next', '/dashboard')
     }
-    return NextResponse.redirect(url)
+    return NextResponse.redirect(redirectUrl)
   }
 
-  return NextResponse.next()
+  if (url && key) {
+    const supabase = createServerClient(url, key, {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll()
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          )
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          })
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          )
+        },
+      },
+    })
+
+    // Refresh session if needed
+    await supabase.auth.getUser()
+  }
+
+  return response
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

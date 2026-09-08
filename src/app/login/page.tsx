@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -13,6 +13,19 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const err = params.get('error')
+    if (err) {
+      setError(
+        err === 'auth' || err === 'missing_code'
+          ? 'Sign-in link failed or expired. Request a new magic link from this page (same browser).'
+          : decodeURIComponent(err)
+      )
+    }
+  }, [])
 
   function continueAsKellyPm() {
     startKellyPmSession()
