@@ -55,10 +55,10 @@ export default function MembersSettingsPage() {
         return
       }
       await ensureProfile()
-      const wsId = await ensureWorkspace()
+      const { id: wsId, error: wsErr } = await ensureWorkspace()
       if (!wsId || cancelled) {
         setLoading(false)
-        setError('No workspace found. Sign in with Supabase and run the schema.')
+        setError(wsErr || 'No workspace found. Sign in with Supabase and run the schema.')
         return
       }
       setWorkspaceId(wsId)
