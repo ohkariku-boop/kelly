@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+
+type CookieToSet = {
+  name: string
+  value: string
+  options: CookieOptions
+}
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
@@ -24,7 +30,7 @@ export async function GET(request: Request) {
       getAll() {
         return cookieStore.getAll()
       },
-      setAll(cookiesToSet: { name: string; value: string; options?: Parameters<typeof cookieStore.set>[2] }[]) {
+      setAll(cookiesToSet: CookieToSet[]) {
         cookiesToSet.forEach(({ name, value, options }) => {
           cookieStore.set(name, value, options)
         })
@@ -35,7 +41,6 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (!error) {
-    // Prefer public site URL behind Vercel proxy
     const site =
       process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, '') || origin
     return NextResponse.redirect(`${site}${next.startsWith('/') ? next : `/${next}`}`)

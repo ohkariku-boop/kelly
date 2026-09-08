@@ -1,5 +1,11 @@
-import { createServerClient } from '@supabase/ssr'
+import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+
+type CookieToSet = {
+  name: string
+  value: string
+  options: CookieOptions
+}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
@@ -11,7 +17,6 @@ export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
 
-  // Forward bare ?code= to auth callback (keep query string)
   const code = request.nextUrl.searchParams.get('code')
   if (code && request.nextUrl.pathname !== '/auth/callback') {
     const redirectUrl = request.nextUrl.clone()
@@ -28,7 +33,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet: { name: string; value: string; options?: Record<string, unknown> }[]) {
+        setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -44,7 +49,6 @@ export async function middleware(request: NextRequest) {
       },
     })
 
-    // Refresh session if needed
     await supabase.auth.getUser()
   }
 
