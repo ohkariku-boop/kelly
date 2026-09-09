@@ -13,7 +13,7 @@ export function SiteFooter() {
               <span className="font-semibold">Kelly</span>
             </div>
             <p className="text-zinc-500 text-xs leading-relaxed">
-              The calm command center for product managers. Decide what matters.
+              The only command center for product managers. Decide what matters.
               Communicate clearly. Ship with intent.
             </p>
           </div>
