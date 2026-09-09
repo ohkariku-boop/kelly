@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HomepageBoard } from '@/components/HomepageBoard'
+import { DemoWalkthrough } from '@/components/DemoWalkthrough'
 import { SiteFooter } from '@/components/SiteFooter'
 
 export default function Home() {
@@ -36,33 +37,61 @@ export default function Home() {
 
       <main className="flex-1">
         {/* Hero */}
-        <section className="max-w-5xl mx-auto px-6 pt-16 pb-10 text-center">
-          <p className="text-sm font-medium text-zinc-500 mb-4 tracking-wide uppercase">
-            For product managers
-          </p>
-          <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-zinc-900 max-w-2xl mx-auto leading-[1.15]">
-            Everything a PM needs.
-            <br />
-            <span className="text-zinc-400">Nothing a PM doesn’t.</span>
-          </h1>
-          <p className="mt-6 text-lg text-zinc-600 max-w-xl mx-auto leading-relaxed">
-            Kelly is the calm command center for product work: prioritize on a
-            fixed Now / Next / Later board, attach customer feedback to every
-            item, and ship stakeholder updates without ceremony.
-          </p>
-          <div className="mt-8 flex items-center justify-center gap-3">
-            <Link
-              href="/dashboard"
-              className="bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-800 transition"
-            >
-              Try the roadmap
-            </Link>
-            <Link
-              href="/docs"
-              className="border border-zinc-300 text-zinc-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-50 transition"
-            >
-              Read the docs
-            </Link>
+        <section className="max-w-6xl mx-auto px-6 pt-12 sm:pt-16 pb-12">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
+            {/* Left: copy */}
+            <div className="text-left">
+              <p className="text-sm font-medium text-zinc-500 mb-4 tracking-wide uppercase">
+                For product managers & their teams
+              </p>
+              <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-zinc-900 leading-[1.12]">
+                Everything a PM needs.
+                <br />
+                <span className="text-zinc-400">Nothing a PM doesn’t.</span>
+              </h1>
+              <p className="mt-6 text-lg text-zinc-600 max-w-lg leading-relaxed">
+                Kelly is the shared command center for product work: one
+                Now&nbsp;/&nbsp;Next&nbsp;/&nbsp;Later board per product, feedback
+                on every bet, clear owners, and stakeholder updates without
+                ceremony — so the whole team stays aligned day to day.
+              </p>
+              <ul className="mt-6 space-y-2 text-sm text-zinc-600">
+                <li className="flex gap-2">
+                  <span className="text-zinc-400">→</span>
+                  PM prioritizes; eng & design see the same stack
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-zinc-400">→</span>
+                  Drag to re-order; attach the customer “why”
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-zinc-400">→</span>
+                  Multi-user workspace with invite links
+                </li>
+              </ul>
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                <Link
+                  href="/dashboard"
+                  className="bg-zinc-900 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-800 transition"
+                >
+                  Try the roadmap
+                </Link>
+                <Link
+                  href="/docs"
+                  className="border border-zinc-300 text-zinc-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-50 transition"
+                >
+                  Read the docs
+                </Link>
+              </div>
+            </div>
+
+            {/* Right: multi-user demo “video” */}
+            <div className="w-full">
+              <DemoWalkthrough />
+              <p className="mt-3 text-center text-[11px] text-zinc-400">
+                Auto-playing walkthrough · Maya (PM), Jordan (Eng), Sam (Design)
+              </p>
+            </div>
           </div>
         </section>
 
