@@ -135,11 +135,11 @@ export default function Home() {
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                   Principle
                 </p>
-                <h3 className="font-medium mb-2">Fewer objects than Kaneo</h3>
+                <h3 className="font-medium mb-2">Fewer objects than Jira & Linear</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  Kaneo proved project tools can stay minimal. Kelly goes further
-                  for PMs: one unit of work (Item), locked Now/Next/Later, optional
-                  goals — no initiative hierarchy to maintain.
+                  Jira and Linear excel at delivery workflows. Kelly stays on the
+                  PM side: one unit of work (Item), locked Now/Next/Later, optional
+                  goals — no issue types, cycles, or initiative hierarchy to maintain.
                 </p>
               </div>
               <div className="bg-white border border-zinc-200 rounded-xl p-6">
@@ -220,17 +220,18 @@ export default function Home() {
         <section id="compare" className="border-t border-zinc-200 bg-zinc-50">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <h2 className="text-2xl font-semibold text-center mb-3">
-              Kelly vs Kaneo vs Linear
+              Kelly vs Linear vs Jira
             </h2>
             <p className="text-sm text-zinc-500 text-center max-w-xl mx-auto mb-10">
-              Kaneo and Linear are excellent at execution. Kelly is built for the
-              product manager’s decision loop. See also{' '}
-              <a href="https://kaneo.app/docs/core" className="underline hover:text-zinc-800" target="_blank" rel="noreferrer">
-                Kaneo docs
-              </a>{' '}
-              and{' '}
+              Linear and Jira are excellent at execution. Kelly is built for the
+              product manager’s decision loop — prioritize, attach evidence, and
+              communicate — without turning into another issue tracker. See also{' '}
               <a href="https://linear.app/docs" className="underline hover:text-zinc-800" target="_blank" rel="noreferrer">
                 Linear docs
+              </a>{' '}
+              and{' '}
+              <a href="https://www.atlassian.com/software/jira/guides" className="underline hover:text-zinc-800" target="_blank" rel="noreferrer">
+                Jira guides
               </a>
               .
             </p>
@@ -240,46 +241,58 @@ export default function Home() {
                   <tr className="bg-zinc-100 text-left">
                     <th className="p-3 font-medium">Dimension</th>
                     <th className="p-3 font-medium">Kelly</th>
-                    <th className="p-3 font-medium">Kaneo</th>
                     <th className="p-3 font-medium">Linear</th>
+                    <th className="p-3 font-medium">Jira</th>
                   </tr>
                 </thead>
                 <tbody className="text-zinc-600">
                   <tr className="border-t border-zinc-100">
                     <td className="p-3 font-medium text-zinc-900">Primary user</td>
                     <td className="p-3">Product managers</td>
-                    <td className="p-3">Dev / delivery teams</td>
                     <td className="p-3">Engineering teams</td>
+                    <td className="p-3">Delivery / IT teams</td>
                   </tr>
                   <tr className="border-t border-zinc-100 bg-zinc-50/50">
                     <td className="p-3 font-medium text-zinc-900">Core object</td>
                     <td className="p-3">Item (roadmap unit)</td>
-                    <td className="p-3">Task in a Project</td>
                     <td className="p-3">Issue in a Team</td>
+                    <td className="p-3">Issue / work item</td>
                   </tr>
                   <tr className="border-t border-zinc-100">
                     <td className="p-3 font-medium text-zinc-900">Statuses</td>
-                    <td className="p-3">Locked Now/Next/Later</td>
-                    <td className="p-3">Custom columns</td>
-                    <td className="p-3">Custom workflows + cycles</td>
+                    <td className="p-3">Locked Now / Next / Later</td>
+                    <td className="p-3">Workflow + cycles</td>
+                    <td className="p-3">Fully custom workflows</td>
                   </tr>
                   <tr className="border-t border-zinc-100 bg-zinc-50/50">
-                    <td className="p-3 font-medium text-zinc-900">Feedback</td>
-                    <td className="p-3">Native on items</td>
-                    <td className="p-3">Not first-class</td>
-                    <td className="p-3">Customer requests (add-on)</td>
+                    <td className="p-3 font-medium text-zinc-900">Hierarchy</td>
+                    <td className="p-3">Product → Items</td>
+                    <td className="p-3">Initiatives → Projects → Issues</td>
+                    <td className="p-3">Epics → Stories → Sub-tasks</td>
                   </tr>
                   <tr className="border-t border-zinc-100">
+                    <td className="p-3 font-medium text-zinc-900">Customer feedback</td>
+                    <td className="p-3">First-class on each Item</td>
+                    <td className="p-3">Comments / links</td>
+                    <td className="p-3">Comments / linked issues</td>
+                  </tr>
+                  <tr className="border-t border-zinc-100 bg-zinc-50/50">
                     <td className="p-3 font-medium text-zinc-900">Stakeholder updates</td>
-                    <td className="p-3">Built-in structure</td>
-                    <td className="p-3">—</td>
+                    <td className="p-3">Built for PM narrative</td>
                     <td className="p-3">Project updates</td>
+                    <td className="p-3">Dashboards / reports</td>
+                  </tr>
+                  <tr className="border-t border-zinc-100">
+                    <td className="p-3 font-medium text-zinc-900">Configuration</td>
+                    <td className="p-3">Almost none</td>
+                    <td className="p-3">Teams, cycles, workflows</td>
+                    <td className="p-3">Heavy admin surface</td>
                   </tr>
                   <tr className="border-t border-zinc-100 bg-zinc-50/50">
                     <td className="p-3 font-medium text-zinc-900">Philosophy</td>
                     <td className="p-3">Decide & communicate</td>
-                    <td className="p-3">All you need, nothing you don’t</td>
                     <td className="p-3">Purpose-built for software teams</td>
+                    <td className="p-3">Track any work at scale</td>
                   </tr>
                 </tbody>
               </table>

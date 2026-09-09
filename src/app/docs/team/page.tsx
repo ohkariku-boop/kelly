@@ -51,12 +51,12 @@ export default function TeamDocs() {
           </li>
           <li>Invitee signs in with the invited email and accepts.</li>
         </ol>
-        <h2 className="text-lg font-semibold text-zinc-900 pt-4">vs Kaneo</h2>
+        <h2 className="text-lg font-semibold text-zinc-900 pt-4">vs Linear & Jira</h2>
         <p>
-          Kaneo is built as a multi-user execution tracker with invites, roles, and
-          shared boards from day one. Kelly starts as a PM command center and adds
-          the same class of workspace membership so a small product group can share
-          prioritization — without becoming a full delivery tool.
+          Linear and Jira are built as multi-user execution trackers with rich
+          workflows, cycles, and issue hierarchies. Kelly stays a PM command
+          center: shared prioritization for a small product group, without becoming
+          another delivery tool.
         </p>
         <p className="pt-6">
           <Link href="/docs" className="underline">

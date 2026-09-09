@@ -32,7 +32,7 @@ export function SiteFooter() {
               </li>
               <li>
                 <Link href="/#compare" className="hover:text-zinc-900">
-                  vs Kaneo & Linear
+                  vs Linear & Jira
                 </Link>
               </li>
               <li>
@@ -86,15 +86,15 @@ export function SiteFooter() {
         <div className="mt-10 pt-6 border-t border-zinc-100 flex flex-col sm:flex-row justify-between gap-2 text-xs text-zinc-400">
           <p>© {new Date().getFullYear()} Kelly. Built for product managers.</p>
           <p>
-            Inspired by the restraint of{' '}
-            <a href="https://kaneo.app" className="underline hover:text-zinc-600" target="_blank" rel="noreferrer">
-              Kaneo
-            </a>{' '}
-            and the craft of{' '}
+            Built for prioritization and communication — not for replacing{' '}
             <a href="https://linear.app" className="underline hover:text-zinc-600" target="_blank" rel="noreferrer">
               Linear
-            </a>
-            — focused on the PM job.
+            </a>{' '}
+            or{' '}
+            <a href="https://www.atlassian.com/software/jira" className="underline hover:text-zinc-600" target="_blank" rel="noreferrer">
+              Jira
+            </a>{' '}
+            on delivery.
           </p>
         </div>
       </div>
