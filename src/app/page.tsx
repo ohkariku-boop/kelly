@@ -42,31 +42,32 @@ export default function Home() {
             {/* Left: copy */}
             <div className="text-left">
               <p className="text-sm font-medium text-zinc-500 mb-4 tracking-wide uppercase">
-                For product managers & their teams
+                Built by a PM, for product decision-making
               </p>
               <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight text-zinc-900 leading-[1.12]">
-                Everything a PM needs.
+                See where you are.
                 <br />
-                <span className="text-zinc-400">Nothing a PM doesn’t.</span>
+                Choose what&apos;s next.
               </h1>
               <p className="mt-6 text-lg text-zinc-600 max-w-lg leading-relaxed">
-                Kelly is the shared command center for product work: one
-                Now&nbsp;/&nbsp;Next&nbsp;/&nbsp;Later board per product, feedback
-                on every bet, clear owners, and stakeholder updates without
-                ceremony — so the whole team stays aligned day to day.
+                Kelly is the command center for product priorities: a shared
+                Now&nbsp;/&nbsp;Next&nbsp;/&nbsp;Later board so leadership, eng,
+                and design answer the same three questions every week — what
+                we&apos;re advancing, what&apos;s queued, and what we&apos;re
+                deliberately deferring.
               </p>
               <ul className="mt-6 space-y-2 text-sm text-zinc-600">
                 <li className="flex gap-2">
                   <span className="text-zinc-400">→</span>
-                  PM prioritizes; eng & design see the same stack
+                  Influence decisions with evidence on the work, not slide decks
                 </li>
                 <li className="flex gap-2">
                   <span className="text-zinc-400">→</span>
-                  Drag to re-order; attach the customer “why”
+                  Align agile teams without becoming another Jira
                 </li>
                 <li className="flex gap-2">
                   <span className="text-zinc-400">→</span>
-                  Multi-user workspace with invite links
+                  Connect roadmap bets to outcomes (OKRs) without cascade theater
                 </li>
               </ul>
               <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -77,10 +78,10 @@ export default function Home() {
                   Try the roadmap
                 </Link>
                 <Link
-                  href="/docs"
+                  href="/#why"
                   className="border border-zinc-300 text-zinc-700 px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-zinc-50 transition"
                 >
-                  Read the docs
+                  Why Kelly exists
                 </Link>
               </div>
             </div>
@@ -113,33 +114,57 @@ export default function Home() {
         <section id="why" className="border-t border-zinc-200 bg-zinc-50">
           <div className="max-w-5xl mx-auto px-6 py-20">
             <h2 className="text-2xl font-semibold text-center mb-3">Why Kelly exists</h2>
-            <p className="text-zinc-600 text-center max-w-2xl mx-auto mb-12 leading-relaxed">
-              Most “PM tools” are either heavy strategy suites or engineering
-              trackers with a roadmap view bolted on. Product managers live in the
-              gap: deciding what matters, defending it with evidence, and telling
-              the organization what changed — without drowning in process.
+            <p className="text-zinc-500 text-center text-sm mb-10 max-w-xl mx-auto">
+              A product built from two decades in the gap between project delivery and product judgment.
             </p>
+
+            <div className="max-w-3xl mx-auto mb-14 text-zinc-600 leading-relaxed space-y-4 text-[15px]">
+              <p>
+                For more than twenty years I&apos;ve worked as an IT project manager
+                and product manager — sitting between engineering trackers, executive
+                decks, and the real question every week: <em>what should we do now,
+                what comes next, and what can wait?</em>
+              </p>
+              <p>
+                The tools never matched the job. Jira and Linear are excellent at
+                delivery: issues, sprints, velocity. Strategy suites and OKR platforms
+                are excellent at cascading goals on paper. In between lives the PM&apos;s
+                actual work — choosing a short list of bets, defending them with
+                customer evidence, aligning the team, and giving leadership a calm
+                picture of reality. That middle layer was always improvised: slides,
+                spreadsheets, Slack threads, and status meetings that existed only
+                because the system of record couldn&apos;t tell the story.
+              </p>
+              <p>
+                Kelly is that missing layer. Not another issue tracker. Not a heavy
+                PPM suite. A straight-to-the-point command center so anyone — PM,
+                tech lead, or executive — can open one board and understand{' '}
+                <strong className="text-zinc-800 font-medium">where we are, what we&apos;re doing next, and what we&apos;re doing later</strong>.
+                The goal is influence: better decisions, less theater, shared clarity.
+              </p>
+            </div>
+
             <div className="grid sm:grid-cols-3 gap-6">
               <div className="bg-white border border-zinc-200 rounded-xl p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                   Problem
                 </p>
-                <h3 className="font-medium mb-2">Tool sprawl</h3>
+                <h3 className="font-medium mb-2">The middle is missing</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  Feedback in spreadsheets, priorities in slides, status in Slack,
-                  delivery in Linear or Jira. Context fractures. Status theater
-                  expands.
+                  Feedback in sheets, priorities in slides, status in Slack, delivery
+                  in Linear or Jira. Context fractures. Executives ask for clarity;
+                  PMs rebuild the narrative every week from fragments.
                 </p>
               </div>
               <div className="bg-white border border-zinc-200 rounded-xl p-6">
                 <p className="text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                   Principle
                 </p>
-                <h3 className="font-medium mb-2">Fewer objects than Jira & Linear</h3>
+                <h3 className="font-medium mb-2">Priority, not process</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  Jira and Linear excel at delivery workflows. Kelly stays on the
-                  PM side: one unit of work (Item), locked Now/Next/Later, optional
-                  goals — no issue types, cycles, or initiative hierarchy to maintain.
+                  One unit of work. Locked Now / Next / Later. Optional goals for
+                  outcome context. No issue types, sprint machinery, or initiative
+                  trees to administer — those stay in your delivery tool.
                 </p>
               </div>
               <div className="bg-white border border-zinc-200 rounded-xl p-6">
@@ -148,8 +173,82 @@ export default function Home() {
                 </p>
                 <h3 className="font-medium mb-2">Decide & communicate</h3>
                 <p className="text-sm text-zinc-600 leading-relaxed">
-                  Prioritize in minutes. Open an item and the “why” is already
-                  there. Draft stakeholder updates from the board — not from memory.
+                  Prioritize in minutes. Evidence lives on the item. Owners are
+                  visible. Stakeholder updates come from the board — so influence
+                  is continuous, not a quarterly scramble.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+
+        {/* Now Next Later + alignment */}
+        <section id="now-next-later" className="border-t border-zinc-200">
+          <div className="max-w-5xl mx-auto px-6 py-20">
+            <h2 className="text-2xl font-semibold text-center mb-3">
+              Now, Next, Later — priority, not a calendar
+            </h2>
+            <p className="text-sm text-zinc-500 text-center max-w-2xl mx-auto mb-12 leading-relaxed">
+              People always ask what the time boxes are. Kelly does not invent fake
+              sprints. Columns answer <em>what we choose</em>, not <em>when the Gantt
+              says so</em>. Optional horizons and target dates add soft timing when you need it.
+            </p>
+            <div className="grid md:grid-cols-3 gap-5 mb-14">
+              <div className="border border-zinc-200 rounded-xl p-5 bg-white">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-700 mb-2">Now</p>
+                <h3 className="font-medium mb-2">Actively advancing</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  The short list of bets capacity is on. Not “due this Friday” —
+                  <em>chosen</em> for focus. Executives should be able to scan Now
+                  and know the company&apos;s product attention.
+                </p>
+              </div>
+              <div className="border border-zinc-200 rounded-xl p-5 bg-white">
+                <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 mb-2">Next</p>
+                <h3 className="font-medium mb-2">Queued when capacity opens</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  Ready to pull forward — not scheduled into a fictional sprint.
+                  Drag here when Now is full. Keeps the pipeline honest without
+                  pretending certainty.
+                </p>
+              </div>
+              <div className="border border-zinc-200 rounded-xl p-5 bg-white">
+                <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Later</p>
+                <h3 className="font-medium mb-2">Deliberately deferred</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed">
+                  Visible on purpose — not a shame backlog. Later means we said no
+                  for now. That honesty is what stops every request from becoming a
+                  silent commitment.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              <div className="rounded-xl border border-zinc-200 p-6 bg-zinc-50">
+                <h3 className="font-medium mb-2">For executives</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed mb-3">
+                  Open one board. See the priority stack, owners, and evidence.
+                  Read a short Update (progress, risks, asks) instead of a
+                  slide rebuild. Kelly supports decision and alignment — not
+                  delivery micromanagement. Ship dates and capacity stay in
+                  Linear or Jira.
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Ask: What are we choosing? Why? Who owns it? What blocked us?
+                </p>
+              </div>
+              <div className="rounded-xl border border-zinc-200 p-6 bg-zinc-50">
+                <h3 className="font-medium mb-2">OKRs & agile alignment</h3>
+                <p className="text-sm text-zinc-600 leading-relaxed mb-3">
+                  Optional Goals hold outcome context (the “why this quarter”).
+                  Items are the bets that might move those outcomes — directional
+                  alignment, not a rigid KR cascade. For agile teams, Kelly is the
+                  shared product priority surface; sprints and tickets remain the
+                  delivery system of record.
+                </p>
+                <p className="text-xs text-zinc-500">
+                  Strategy → ranked bets → evidence → narrative. Execution tools do the rest.
                 </p>
               </div>
             </div>
@@ -223,9 +322,10 @@ export default function Home() {
               Kelly vs Linear vs Jira
             </h2>
             <p className="text-sm text-zinc-500 text-center max-w-xl mx-auto mb-10">
-              Linear and Jira are excellent at execution. Kelly is built for the
-              product manager’s decision loop — prioritize, attach evidence, and
-              communicate — without turning into another issue tracker. See also{' '}
+              Linear and Jira excel at execution. Kelly exists for the decision
+              loop twenty years of PM work kept reinventing in slides: prioritize,
+              attach evidence, align the team, brief leadership — without becoming
+              another issue tracker. See also{' '}
               <a href="https://linear.app/docs" className="underline hover:text-zinc-800" target="_blank" rel="noreferrer">
                 Linear docs
               </a>{' '}
@@ -306,10 +406,10 @@ export default function Home() {
             <h2 className="text-2xl font-semibold text-center mb-10">Design principles</h2>
             <div className="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
               {[
-                ['Minimal surface', 'If a feature does not help a PM decide, prioritize, or communicate, it does not ship.'],
-                ['Fixed over flexible', 'Locked statuses beat infinite custom fields. Configuration is not a feature.'],
-                ['Evidence on the work', 'Feedback lives on the Item so rationale never drifts into a separate wiki.'],
-                ['Calm by default', 'Generous whitespace, few colors, no notification theater. The tool should disappear.'],
+                ['Built from the middle', 'Twenty years between delivery trackers and executive decks showed the gap: a simple view of Now, Next, and Later that can influence real decisions.'],
+                ['Priority over process', 'Locked Now / Next / Later beats infinite workflows. Configuration is not a feature; clarity is.'],
+                ['Evidence on the work', 'Feedback lives on the Item so the rationale never drifts into a separate wiki or Slack thread.'],
+                ['Align without absorbing delivery', 'Shared boards and owners help agile teams and OKR intent stay coherent — while Linear and Jira remain the system of record for execution.'],
               ].map(([t, d]) => (
                 <div key={t} className="border border-zinc-200 rounded-xl p-5">
                   <h3 className="font-medium mb-1">{t}</h3>

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kelly PM",
-  description: "Everything a PM needs. Nothing else. Minimalist product management.",
+  description: "See where you are. Choose what's next. The PM command center for Now, Next, and Later — built from 20+ years between delivery tools and executive decisions.",
 };
 
 export default function RootLayout({
