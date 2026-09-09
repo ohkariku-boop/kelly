@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kelly — the only command center for Product Managers",
+  title: "Kelly PM",
   description: "Everything a PM needs. Nothing else. Minimalist product management.",
 };
 
