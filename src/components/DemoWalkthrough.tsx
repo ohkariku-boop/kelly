@@ -141,28 +141,50 @@ const SCENES: Scene[] = [
   },
 ]
 
-const SCENE_MS = 4200
+const SCENE_MS = 4500
 
 export function DemoWalkthrough() {
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(true)
+  const [fade, setFade] = useState(true)
 
   const scene = SCENES[index]
 
+  const goTo = useCallback((i: number) => {
+    setFade(false)
+    window.setTimeout(() => {
+      setIndex(((i % SCENES.length) + SCENES.length) % SCENES.length)
+      setFade(true)
+    }, 120)
+  }, [])
+
   const next = useCallback(() => {
-    setIndex((i) => (i + 1) % SCENES.length)
+    setFade(false)
+    window.setTimeout(() => {
+      setIndex((i) => (i + 1) % SCENES.length)
+      setFade(true)
+    }, 120)
   }, [])
 
   useEffect(() => {
     if (!playing) return
-    const t = setInterval(next, SCENE_MS)
+    const t = setInterval(() => {
+      setFade(false)
+      window.setTimeout(() => {
+        setIndex((i) => (i + 1) % SCENES.length)
+        setFade(true)
+      }, 120)
+    }, SCENE_MS)
     return () => clearInterval(t)
-  }, [playing, next])
+  }, [playing])
+
+  // Always reserve space for up to 2 chat lines
+  const chatLines = scene.chat ?? []
 
   return (
-    <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-950 text-zinc-100 shadow-2xl overflow-hidden">
-      {/* Window chrome */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-zinc-800 bg-zinc-900/80">
+    <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-950 text-zinc-100 shadow-2xl overflow-hidden flex flex-col h-[32rem] sm:h-[34rem]">
+      {/* Window chrome — fixed */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-zinc-800 bg-zinc-900/80 shrink-0">
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
@@ -174,15 +196,20 @@ export function DemoWalkthrough() {
         </span>
       </div>
 
-      <div className="p-4 sm:p-5 space-y-4">
-        {/* Scene label + users */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
+      {/* Body — fixed height, content fades */}
+      <div
+        className={`flex-1 min-h-0 p-4 sm:p-5 flex flex-col gap-3 transition-opacity duration-150 ${
+          fade ? 'opacity-100' : 'opacity-40'
+        }`}
+      >
+        {/* Scene label + users — fixed row height */}
+        <div className="flex flex-wrap items-center justify-between gap-2 min-h-[1.5rem] shrink-0">
           <p className="text-[11px] font-medium text-indigo-300">{scene.label}</p>
           <div className="flex items-center gap-1.5">
             {scene.users.map((u) => (
               <span
                 key={u.name}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] border transition ${
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] border transition-colors ${
                   u.active
                     ? 'border-white/30 bg-white/10 text-white'
                     : 'border-zinc-700 text-zinc-500'
@@ -199,12 +226,13 @@ export function DemoWalkthrough() {
           </div>
         </div>
 
-        <p className="text-sm text-zinc-300 leading-relaxed min-h-[2.5rem]">
+        {/* Narrator — fixed height */}
+        <p className="text-sm text-zinc-300 leading-relaxed h-10 shrink-0 overflow-hidden">
           {scene.narrator}
         </p>
 
-        {/* Mini board */}
-        <div className="grid grid-cols-3 gap-2">
+        {/* Mini board — fixed column height */}
+        <div className="grid grid-cols-3 gap-2 shrink-0">
           {(
             [
               ['Now', scene.board.now],
@@ -212,7 +240,10 @@ export function DemoWalkthrough() {
               ['Later', scene.board.later],
             ] as const
           ).map(([col, cards]) => (
-            <div key={col} className="rounded-lg bg-zinc-900/80 border border-zinc-800 p-2 min-h-[7.5rem]">
+            <div
+              key={col}
+              className="rounded-lg bg-zinc-900/80 border border-zinc-800 p-2 h-[8.75rem] overflow-hidden"
+            >
               <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5">
                 {col} · {cards.length}
               </p>
@@ -220,7 +251,7 @@ export function DemoWalkthrough() {
                 {cards.length === 0 ? (
                   <p className="text-[10px] text-zinc-600 italic">Empty</p>
                 ) : (
-                  cards.map((c) => (
+                  cards.slice(0, 2).map((c) => (
                     <div
                       key={c.title}
                       className="rounded-md bg-zinc-800/90 border border-zinc-700 px-2 py-1.5"
@@ -237,29 +268,30 @@ export function DemoWalkthrough() {
           ))}
         </div>
 
-        {/* Chat / feedback */}
-        {scene.chat && scene.chat.length > 0 && (
-          <div className="space-y-1.5">
-            {scene.chat.map((m, i) => (
+        {/* Chat slot — always reserved (2 lines) */}
+        <div className="h-[4.25rem] shrink-0 space-y-1.5 overflow-hidden">
+          {chatLines.length === 0 ? (
+            <div className="h-full rounded-lg border border-transparent" aria-hidden />
+          ) : (
+            chatLines.slice(0, 2).map((m, i) => (
               <div
                 key={i}
-                className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-2 text-[11px] text-amber-100/90"
+                className="rounded-lg bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 text-[11px] text-amber-100/90 line-clamp-2"
               >
                 <span className="font-medium text-amber-200">{m.who}: </span>
                 {m.text}
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
 
-        {scene.callout && (
-          <p className="text-[11px] text-emerald-400/90 border-l-2 border-emerald-500/50 pl-2.5">
-            {scene.callout}
-          </p>
-        )}
+        {/* Callout — fixed height */}
+        <p className="text-[11px] text-emerald-400/90 border-l-2 border-emerald-500/50 pl-2.5 h-8 shrink-0 overflow-hidden leading-snug">
+          {scene.callout || '\u00A0'}
+        </p>
 
-        {/* Controls */}
-        <div className="flex items-center gap-2 pt-1">
+        {/* Controls — pinned */}
+        <div className="flex items-center gap-2 mt-auto pt-1 shrink-0">
           <button
             type="button"
             onClick={() => setPlaying((p) => !p)}
@@ -281,10 +313,10 @@ export function DemoWalkthrough() {
                 type="button"
                 aria-label={s.label}
                 onClick={() => {
-                  setIndex(i)
+                  goTo(i)
                   setPlaying(false)
                 }}
-                className={`h-1.5 w-4 rounded-full transition ${
+                className={`h-1.5 w-4 rounded-full transition-colors ${
                   i === index ? 'bg-indigo-400' : 'bg-zinc-700'
                 }`}
               />
