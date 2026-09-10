@@ -15,7 +15,7 @@ export async function ensureWorkspace(): Promise<{
   try {
     await ensureProfile()
   } catch {
-    // profile table may be missing — continue
+    // profile table may be missing - continue
   }
 
   const { data: memberships, error: memReadErr } = await supabase

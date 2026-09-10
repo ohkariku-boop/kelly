@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Kelly PM",
-  description: "See where you are. Choose what's next. The PM command center for Now, Next, and Later — built from 20+ years between delivery tools and executive decisions.",
+  description:
+    "See where you are. Choose what is next. A Now / Next / Later board for product priorities, built from 20+ years between delivery tools and executive decisions.",
 };
 
 export default function RootLayout({

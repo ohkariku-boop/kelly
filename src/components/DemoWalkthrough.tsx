@@ -21,7 +21,7 @@ const SCENES: Scene[] = [
     id: 'morning',
     label: '09:00 · Monday standup',
     narrator:
-      'Maya opens Kelly. One board per product. Now / Next / Later — no sprint noise.',
+      'Maya opens Kelly. One board per product. Now / Next / Later. No sprint noise.',
     users: [
       { name: 'Maya', role: 'PM', color: '#6366f1', active: true },
       { name: 'Jordan', role: 'Eng', color: '#0ea5e9' },
@@ -35,7 +35,7 @@ const SCENES: Scene[] = [
       next: [{ title: 'Apple Pay on web', owner: 'Maya' }],
       later: [{ title: 'Saved addresses', owner: 'Sam' }],
     },
-    callout: 'Shared workspace — everyone sees the same priorities.',
+    callout: 'Shared workspace: everyone sees the same priorities.',
   },
   {
     id: 'feedback',
@@ -61,7 +61,7 @@ const SCENES: Scene[] = [
         text: '“I abandon on mobile every time the address form asks for apartment.”',
       },
     ],
-    callout: 'Feedback is linked to the bet — not lost in Slack.',
+    callout: 'Feedback is linked to the bet, not lost in Slack.',
   },
   {
     id: 'drag',
@@ -86,7 +86,7 @@ const SCENES: Scene[] = [
     },
     chat: [
       { who: 'Jordan', text: 'Checkout drop-off is the only Now we can finish this week.' },
-      { who: 'Maya', text: 'Agreed — Apple Pay moves to Later.' },
+      { who: 'Maya', text: 'Agreed: Apple Pay moves to Later.' },
     ],
     callout: 'Priority changes are visible to the whole workspace instantly.',
   },
@@ -94,7 +94,7 @@ const SCENES: Scene[] = [
     id: 'owner',
     label: '11:40 · Clear ownership',
     narrator:
-      'Sam takes Saved addresses as DRI. Target date is optional — a soft aim, not a deadline theater.',
+      'Sam takes Saved addresses as DRI. Target date is optional: a soft aim, not a hard deadline.',
     users: [
       { name: 'Maya', role: 'PM', color: '#6366f1' },
       { name: 'Jordan', role: 'Eng', color: '#0ea5e9' },
@@ -111,7 +111,7 @@ const SCENES: Scene[] = [
         { title: 'Saved addresses', owner: 'Sam' },
       ],
     },
-    callout: 'Owner (DRI) on every active bet — stakeholders know who to ask.',
+    callout: 'Owner (DRI) on every active bet. Stakeholders know who to ask.',
   },
   {
     id: 'update',
@@ -183,7 +183,7 @@ export function DemoWalkthrough() {
 
   return (
     <div className="w-full rounded-2xl border border-zinc-200 bg-zinc-950 text-zinc-100 shadow-2xl overflow-hidden flex flex-col h-[32rem] sm:h-[34rem]">
-      {/* Window chrome — fixed */}
+      {/* Window chrome. fixed */}
       <div className="flex items-center gap-2 px-3 py-2.5 border-b border-zinc-800 bg-zinc-900/80 shrink-0">
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
         <span className="w-2.5 h-2.5 rounded-full bg-zinc-600" />
@@ -196,13 +196,13 @@ export function DemoWalkthrough() {
         </span>
       </div>
 
-      {/* Body — fixed height, content fades */}
+      {/* Body. fixed height, content fades */}
       <div
         className={`flex-1 min-h-0 p-4 sm:p-5 flex flex-col gap-3 transition-opacity duration-150 ${
           fade ? 'opacity-100' : 'opacity-40'
         }`}
       >
-        {/* Scene label + users — fixed row height */}
+        {/* Scene label + users. fixed row height */}
         <div className="flex flex-wrap items-center justify-between gap-2 min-h-[1.5rem] shrink-0">
           <p className="text-[11px] font-medium text-indigo-300">{scene.label}</p>
           <div className="flex items-center gap-1.5">
@@ -226,12 +226,12 @@ export function DemoWalkthrough() {
           </div>
         </div>
 
-        {/* Narrator — fixed height */}
+        {/* Narrator. fixed height */}
         <p className="text-sm text-zinc-300 leading-relaxed h-10 shrink-0 overflow-hidden">
           {scene.narrator}
         </p>
 
-        {/* Mini board — fixed column height */}
+        {/* Mini board. fixed column height */}
         <div className="grid grid-cols-3 gap-2 shrink-0">
           {(
             [
@@ -268,7 +268,7 @@ export function DemoWalkthrough() {
           ))}
         </div>
 
-        {/* Chat slot — always reserved (2 lines) */}
+        {/* Chat slot. always reserved (2 lines) */}
         <div className="h-[4.25rem] shrink-0 space-y-1.5 overflow-hidden">
           {chatLines.length === 0 ? (
             <div className="h-full rounded-lg border border-transparent" aria-hidden />
@@ -285,12 +285,12 @@ export function DemoWalkthrough() {
           )}
         </div>
 
-        {/* Callout — fixed height */}
+        {/* Callout. fixed height */}
         <p className="text-[11px] text-emerald-400/90 border-l-2 border-emerald-500/50 pl-2.5 h-8 shrink-0 overflow-hidden leading-snug">
           {scene.callout || '\u00A0'}
         </p>
 
-        {/* Controls — pinned */}
+        {/* Controls. pinned */}
         <div className="flex items-center gap-2 mt-auto pt-1 shrink-0">
           <button
             type="button"

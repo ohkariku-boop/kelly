@@ -126,7 +126,7 @@ export default function MembersSettingsPage() {
         </p>
 
         {loading ? (
-          <p className="text-sm text-zinc-400">Loading…</p>
+          <p className="text-sm text-zinc-400">Loading...</p>
         ) : (
           <>
             {error && (

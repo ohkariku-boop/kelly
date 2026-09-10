@@ -14,7 +14,7 @@ export type WorkspaceMember = {
   created_at: string
 }
 
-/** A concurrent product or initiative — each has its own roadmap board */
+/** A concurrent product or initiative - each has its own roadmap board */
 export type Product = {
   id: string
   workspace_id: string
@@ -56,7 +56,7 @@ export type Item = {
   priority: 'urgent' | 'high' | 'medium' | 'low' | 'none'
   /** Auth user id when available */
   owner_id: string | null
-  /** DRI display name — who is accountable for the outcome */
+  /** DRI display name - who is accountable for the outcome */
   owner_name: string | null
   /** Optional target date (ISO date YYYY-MM-DD). Soft aim, not a hard deadline. */
   target_date: string | null

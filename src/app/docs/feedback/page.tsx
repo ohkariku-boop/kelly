@@ -14,22 +14,21 @@ export default function FeedbackDocs() {
       <main className="flex-1 max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-semibold tracking-tight mb-6">Feedback</h1>
         <p className="text-zinc-600 leading-relaxed mb-6">
-          Product decisions rot when the evidence lives somewhere else. Kelly
-          attaches feedback notes directly to Items: interview quotes, support
-          themes, sales call takeaways, analytics observations.
+          Product decisions weaken when the evidence lives somewhere else. Kelly
+          attaches feedback notes directly to items: interview quotes, support
+          themes, sales call notes, analytics observations.
         </p>
         <h2 className="text-lg font-semibold mt-8 mb-3">How to use it</h2>
         <ol className="list-decimal list-inside text-zinc-600 text-sm space-y-2 mb-6">
-          <li>Open an Item from the roadmap.</li>
-          <li>Add a short note in Feedback — prefer the customer’s words.</li>
+          <li>Open an item from the roadmap.</li>
+          <li>Add a short note in Feedback. Prefer the customer&apos;s words.</li>
           <li>Optionally tag a source (interview, support, sales, research).</li>
-          <li>When priorities are challenged, open the Item and show the trail.</li>
+          <li>When priorities are challenged, open the item and show the trail.</li>
         </ol>
         <p className="text-zinc-600 text-sm leading-relaxed mb-6">
-          This is narrower than a full voice-of-customer platform, and wider than
-          a free-text description field. Execution tools such as Kaneo focus on
-          task ownership and labels; they do not center continuous discovery
-          evidence on the prioritization object itself.
+          This is narrower than a full research platform and more structured than a
+          free-text description field. Delivery tools track ownership and labels;
+          they rarely keep continuous discovery evidence on the priority object itself.
         </p>
         <p className="mt-10 text-sm">
           <Link href="/docs/updates" className="underline">Next: Updates →</Link>

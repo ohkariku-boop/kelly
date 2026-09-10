@@ -19,31 +19,32 @@ export default function TeamDocs() {
         </h1>
         <p>
           Kelly workspaces can be shared. Products, items, and feedback belong to
-          the workspace; every member sees the same roadmaps.
+          the workspace. Every member sees the same roadmaps.
         </p>
         <h2 className="text-lg font-semibold text-zinc-900 pt-4">Roles</h2>
         <ul className="list-disc list-inside space-y-1">
           <li>
-            <strong>Owner</strong> — full control, including removing members and
+            <strong>Owner</strong>: full control, including removing members and
             changing roles
           </li>
           <li>
-            <strong>Member</strong> — create invites, edit roadmaps and feedback
+            <strong>Member</strong>: create invites, edit roadmaps and feedback
           </li>
           <li>
-            <strong>Viewer</strong> — intended for read-only access (enforced as
-            you tighten RLS)
+            <strong>Viewer</strong>: read-only access (tighten with RLS as needed)
           </li>
         </ul>
         <h2 className="text-lg font-semibold text-zinc-900 pt-4">Setup</h2>
         <ol className="list-decimal list-inside space-y-2">
           <li>
-            Run <code className="text-xs bg-zinc-100 px-1 rounded">supabase/schema.sql</code> then{' '}
-            <code className="text-xs bg-zinc-100 px-1 rounded">supabase/multi-user.sql</code> in the
+            Run <code className="text-xs bg-zinc-100 px-1 rounded">supabase/ALL.sql</code> in the
             Supabase SQL editor.
           </li>
-          <li>Enable Email auth and add redirect URLs for <code className="text-xs bg-zinc-100 px-1 rounded">/auth/callback</code> and{' '}
-            <code className="text-xs bg-zinc-100 px-1 rounded">/invite/*</code>.</li>
+          <li>
+            Enable Email auth and add redirect URLs for{' '}
+            <code className="text-xs bg-zinc-100 px-1 rounded">/auth/callback</code> and{' '}
+            <code className="text-xs bg-zinc-100 px-1 rounded">/invite/*</code>.
+          </li>
           <li>Sign in with magic link (not Kelly PM local mode).</li>
           <li>
             Open <Link href="/settings/members" className="underline">Team settings</Link>, invite by
@@ -53,10 +54,9 @@ export default function TeamDocs() {
         </ol>
         <h2 className="text-lg font-semibold text-zinc-900 pt-4">vs Linear & Jira</h2>
         <p>
-          Linear and Jira are built as multi-user execution trackers with rich
-          workflows, cycles, and issue hierarchies. Kelly stays a PM command
-          center: shared prioritization for a small product group, without becoming
-          another delivery tool.
+          Linear and Jira are multi-user execution trackers with workflows, cycles,
+          and issue hierarchies. Kelly is a shared priority board for a small product
+          group. It is not meant to replace delivery tools.
         </p>
         <p className="pt-6">
           <Link href="/docs" className="underline">

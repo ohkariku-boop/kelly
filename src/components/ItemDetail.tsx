@@ -201,7 +201,7 @@ export function ItemDetail({
                 onBlur={saveMeta}
                 className="w-full text-sm border border-zinc-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-zinc-400 text-zinc-700"
               />
-              <p className="text-[11px] text-zinc-400 mt-1">Optional — soft aim, not a deadline.</p>
+              <p className="text-[11px] text-zinc-400 mt-1">Optional - soft aim, not a deadline.</p>
             </div>
           </div>
 
@@ -235,11 +235,11 @@ export function ItemDetail({
               onChange={(e) => setDescription(e.target.value)}
               onBlur={saveMeta}
               rows={4}
-              placeholder="Why this matters, scope, notes…"
+              placeholder="Why this matters, scope, notes..."
               className="w-full text-sm text-zinc-700 border border-zinc-200 rounded-lg p-3 outline-none focus:border-zinc-400 resize-none placeholder:text-zinc-400"
             />
             {saving && (
-              <p className="text-[11px] text-zinc-400 mt-1">Saving…</p>
+              <p className="text-[11px] text-zinc-400 mt-1">Saving...</p>
             )}
           </div>
 
@@ -254,7 +254,7 @@ export function ItemDetail({
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') submitFeedback()
                 }}
-                placeholder="Customer quote or note…"
+                placeholder="Customer quote or note..."
                 className="flex-1 text-sm border border-zinc-200 rounded-lg px-3 py-2 outline-none focus:border-zinc-400"
               />
               <button

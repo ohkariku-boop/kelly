@@ -13,8 +13,7 @@ export function SiteFooter() {
               <span className="font-semibold">Kelly</span>
             </div>
             <p className="text-zinc-500 text-xs leading-relaxed">
-              The only command center for product managers — where you are, what's next, what's later.
-              Communicate clearly. Ship with intent.
+              Product priority board: where you are, what is next, what is later.
             </p>
           </div>
           <div>
@@ -86,7 +85,7 @@ export function SiteFooter() {
         <div className="mt-10 pt-6 border-t border-zinc-100 flex flex-col sm:flex-row justify-between gap-2 text-xs text-zinc-400">
           <p>© {new Date().getFullYear()} Kelly. Built for product managers.</p>
           <p>
-            Built for prioritization and communication — not for replacing{' '}
+            For prioritization and communication, not a replacement for{' '}
             <a href="https://linear.app" className="underline hover:text-zinc-600" target="_blank" rel="noreferrer">
               Linear
             </a>{' '}

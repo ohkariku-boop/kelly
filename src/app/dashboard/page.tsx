@@ -294,7 +294,7 @@ export default function DashboardPage() {
         const { id: wsId, error: wsError } = await ensureWorkspace()
         if (!wsId) {
           if (!cancelled) {
-            // Signed in but workspace bootstrap failed — do not pretend demo
+            // Signed in but workspace bootstrap failed - do not pretend demo
             setMode('supabase')
             setProducts([])
             setItems([])
@@ -636,7 +636,7 @@ export default function DashboardPage() {
               </div>
             )}
             {mode === 'loading' ? (
-              <p className="text-sm text-zinc-400 py-12 text-center">Loading…</p>
+              <p className="text-sm text-zinc-400 py-12 text-center">Loading...</p>
             ) : !activeProduct ? (
               <div className="text-center py-16">
                 <p className="text-sm text-zinc-500 mb-4">No products yet.</p>
@@ -684,7 +684,7 @@ export default function DashboardPage() {
                       />
                     ) : (
                       <span className="text-sm text-zinc-600">
-                        {activeProduct.horizon || '—'}
+                        {activeProduct.horizon || 'None'}
                       </span>
                     )}
                   </div>
@@ -768,7 +768,7 @@ export default function DashboardPage() {
                     setIdeaDraft('')
                   }
                 }}
-                placeholder="Capture an idea…"
+                placeholder="Capture an idea..."
                 className="w-full text-sm border border-zinc-200 rounded-lg px-3 py-2 outline-none focus:border-zinc-400"
               />
             </div>

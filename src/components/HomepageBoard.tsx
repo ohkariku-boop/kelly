@@ -117,7 +117,7 @@ export function HomepageBoard() {
           </p>
         )}
         <p className="text-xs text-zinc-400 mb-4">
-          Switch products above. Each has its own Now / Next / Later board — drag cards or click
+          Switch products above. Each has its own Now / Next / Later board - drag cards or click
           for feedback.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">

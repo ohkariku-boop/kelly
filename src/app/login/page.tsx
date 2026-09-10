@@ -80,7 +80,7 @@ export default function LoginPage() {
             Continue as Kelly PM
           </button>
           <p className="text-[11px] text-zinc-400 text-center leading-relaxed">
-            Full board, drag-and-drop, detail & feedback — saved in this browser.
+            Full board, drag-and-drop, detail and feedback. Saved in this browser.
             No email required.
           </p>
 
@@ -107,7 +107,7 @@ export default function LoginPage() {
               disabled={loading}
               className="w-full border border-zinc-200 text-zinc-700 text-sm font-medium py-2.5 rounded-lg hover:bg-zinc-50 disabled:opacity-50"
             >
-              {loading ? 'Sending…' : 'Email me a link'}
+              {loading ? 'Sending...' : 'Email me a link'}
             </button>
           </form>
 

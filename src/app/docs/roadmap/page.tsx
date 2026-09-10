@@ -14,45 +14,35 @@ export default function RoadmapDocs() {
       <main className="flex-1 max-w-3xl mx-auto px-6 py-12">
         <h1 className="text-3xl font-semibold tracking-tight mb-6">Roadmap</h1>
         <p className="text-zinc-600 leading-relaxed mb-6">
-          Kelly’s roadmap is a prioritization surface, not a project tracker.
-          Kaneo documents Board, List, and Backlog views over tasks inside a
-          project (
-          <a href="https://kaneo.app/docs/core/functional/plan-and-execute-tasks" className="underline" target="_blank" rel="noreferrer">
-            plan and execute tasks
-          </a>
-          ). Linear models Issues, Projects, Cycles, and Initiatives (
-          <a href="https://linear.app/docs/conceptual-model" className="underline" target="_blank" rel="noreferrer">
-            conceptual model
-          </a>
-          ). Kelly collapses that into <strong>Items</strong> and five locked statuses.
+          Kelly&apos;s roadmap is for prioritization, not task tracking. Linear models
+          issues, projects, cycles, and initiatives. Jira models epics, stories, and
+          workflows. Kelly uses <strong>Items</strong> and five fixed statuses.
         </p>
 
-        <h2 className="text-lg font-semibold mt-10 mb-3">Statuses (locked)</h2>
+        <h2 className="text-lg font-semibold mt-10 mb-3">Statuses (fixed)</h2>
         <ul className="text-zinc-600 space-y-2 text-sm leading-relaxed mb-6">
-          <li><strong>Idea</strong> — captured, not ranked. Safe place for noise.</li>
-          <li><strong>Now</strong> — actively being designed or built this period.</li>
-          <li><strong>Next</strong> — committed soon; capacity is roughly spoken for.</li>
-          <li><strong>Later</strong> — intentional deferral, not a junk drawer.</li>
-          <li><strong>Done</strong> — shipped or closed; restorable if needed.</li>
+          <li><strong>Idea</strong>: captured, not ranked. Safe place for requests.</li>
+          <li><strong>Now</strong>: actively being designed or built.</li>
+          <li><strong>Next</strong>: next up when capacity opens.</li>
+          <li><strong>Later</strong>: deferred on purpose, not a junk drawer.</li>
+          <li><strong>Done</strong>: shipped or closed.</li>
         </ul>
         <p className="text-zinc-600 text-sm leading-relaxed mb-6">
-          There is no workflow settings screen. That is intentional. Kaneo allows
-          per-project columns and automation rules; useful for delivery, costly for
-          PM clarity. Kelly optimizes for shared language across the company.
+          There is no workflow settings screen. That is intentional. Custom columns
+          help delivery teams; they hurt shared language for product priorities.
         </p>
 
         <h2 className="text-lg font-semibold mt-10 mb-3">What makes a good Item</h2>
         <p className="text-zinc-600 text-sm leading-relaxed mb-4">
-          Prefer outcome language over feature laundry lists. “Reduce mobile
-          checkout drop-off” beats “New checkout UI”. Put success criteria in the
+          Prefer outcome language over feature lists. &quot;Reduce mobile checkout
+          drop-off&quot; beats &quot;New checkout UI&quot;. Put success criteria in the
           description. Attach feedback so the bet stays defensible.
         </p>
 
         <h2 className="text-lg font-semibold mt-10 mb-3">Optional goals</h2>
         <p className="text-zinc-600 text-sm leading-relaxed mb-6">
-          Goals exist in the data model as lightweight framing. They are not a
-          required hierarchy like Linear Initiatives. Use them when a metric or
-          theme helps stakeholders; ignore them when they add ceremony.
+          Goals are light outcome framing. They are not required hierarchy. Use them
+          when a metric helps stakeholders; skip them when they add noise.
         </p>
 
         <p className="mt-10 text-sm flex gap-4">

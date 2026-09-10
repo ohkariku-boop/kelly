@@ -5,22 +5,22 @@ const SECTIONS = [
   {
     title: 'Getting started',
     href: '/docs/getting-started',
-    body: 'Sign in, workspace bootstrap, run the schema, and place your first items on Now / Next / Later.',
+    body: 'Sign in, set up the database, and put your first items on Now / Next / Later.',
   },
   {
     title: 'Roadmap',
     href: '/docs/roadmap',
-    body: 'How Items, locked statuses, and Ideas work — and why Kelly refuses custom workflows.',
+    body: 'Items, locked statuses, and Ideas. Why statuses are fixed.',
   },
   {
     title: 'Feedback',
     href: '/docs/feedback',
-    body: 'Attach customer evidence to Items so prioritization stays grounded.',
+    body: 'Attach customer evidence to items so priorities stay grounded.',
   },
   {
     title: 'Updates',
     href: '/docs/updates',
-    body: 'Structured stakeholder communication without status theater.',
+    body: 'Short stakeholder status: progress, risks, next steps, asks.',
   },
   {
     title: 'Team & multi-user',
@@ -48,21 +48,19 @@ export default function DocsIndex() {
       <main className="flex-1 max-w-3xl mx-auto px-6 py-12 w-full">
         <h1 className="text-3xl font-semibold tracking-tight mb-3">Documentation</h1>
         <p className="text-zinc-600 leading-relaxed mb-4">
-          Kelly is a product management tool: prioritize on a fixed roadmap, keep
-          feedback on the work, and communicate status without ceremony. These
-          guides explain the model in depth.
+          Kelly is a product priority tool: fixed Now / Next / Later roadmap,
+          feedback on the work, and short status updates. These guides explain the model.
         </p>
         <p className="text-sm text-zinc-500 mb-10 leading-relaxed">
-          For execution-focused trackers, see{' '}
-          <a href="https://kaneo.app/docs/core" className="underline" target="_blank" rel="noreferrer">
-            Kaneo’s core docs
-          </a>{' '}
-          (workspaces, projects, board/list/backlog) and{' '}
+          For execution trackers, see{' '}
           <a href="https://linear.app/docs" className="underline" target="_blank" rel="noreferrer">
-            Linear’s documentation
+            Linear docs
           </a>{' '}
-          (issues, cycles, projects, initiatives). Kelly deliberately omits most of
-          that surface area.
+          and{' '}
+          <a href="https://www.atlassian.com/software/jira/guides" className="underline" target="_blank" rel="noreferrer">
+            Jira guides
+          </a>
+          . Kelly intentionally leaves most of that surface area out.
         </p>
         <div className="space-y-4">
           {SECTIONS.map((s) => (

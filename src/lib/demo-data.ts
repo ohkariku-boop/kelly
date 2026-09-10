@@ -209,7 +209,7 @@ export const DEMO_ITEMS: Item[] = [
     goal_id: null,
     title: 'Dark mode for the web app',
     description:
-      'Frequent request on Twitter and in support. Not tied to a current outcome — keep as idea until we validate demand.',
+      'Frequent request on Twitter and in support. Not tied to a current outcome - keep as idea until we validate demand.',
     status: 'idea',
     priority: 'none',
     owner_id: null,
@@ -247,7 +247,7 @@ export const DEMO_FEEDBACK: Record<string, Feedback[]> = {
       workspace_id: 'demo',
       item_id: 'demo-1',
       content:
-        '“I abandon cart on my phone every time — too many fields and the keyboard covers the pay button.” — Customer interview, Aug 28',
+        '“I abandon cart on my phone every time - too many fields and the keyboard covers the pay button.” - Customer interview, Aug 28',
       source: 'user interview',
       customer_name: 'Maya R.',
       created_by: null,
@@ -284,7 +284,7 @@ export const DEMO_FEEDBACK: Record<string, Feedback[]> = {
       workspace_id: 'demo',
       item_id: 'demo-4',
       content:
-        '“We’d renew faster if we could see what’s coming without booking another call.” — Expansion account CSM note',
+        '“We’d renew faster if we could see what’s coming without booking another call.” - Expansion account CSM note',
       source: 'cs',
       customer_name: null,
       created_by: null,

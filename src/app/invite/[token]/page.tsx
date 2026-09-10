@@ -98,7 +98,7 @@ export default function AcceptInvitePage() {
         <h1 className="text-xl font-semibold mb-2">Join workspace</h1>
 
         {status === 'loading' && (
-          <p className="text-sm text-zinc-500">Checking invitation…</p>
+          <p className="text-sm text-zinc-500">Checking invitation...</p>
         )}
 
         {status === 'error' && (
@@ -161,7 +161,7 @@ export default function AcceptInvitePage() {
 
         {status === 'done' && (
           <p className="text-sm text-emerald-700">
-            You&apos;re in. Redirecting to the roadmap…
+            You&apos;re in. Redirecting to the roadmap...
           </p>
         )}
       </div>
