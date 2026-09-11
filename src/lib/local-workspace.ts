@@ -248,3 +248,26 @@ export function localDeleteGoal(id: string) {
   )
   saveWorkspace(ws)
 }
+
+
+export function localDeleteItem(id: string) {
+  const ws = loadWorkspace()
+  ws.items = ws.items.filter((i) => i.id !== id)
+  if (ws.feedback) delete ws.feedback[id]
+  saveWorkspace(ws)
+}
+
+export function localDeleteProduct(id: string) {
+  const ws = loadWorkspace()
+  const remaining = ws.products.filter((p) => p.id !== id)
+  if (remaining.length === 0) return false
+  ws.products = remaining
+  ws.items = ws.items.filter((i) => i.product_id !== id)
+  ws.goals = (ws.goals || []).filter((g) => g.product_id !== id)
+  saveWorkspace(ws)
+  const active = getActiveProductId()
+  if (active === id) {
+    setActiveProductId(remaining[0]?.id ?? null)
+  }
+  return true
+}

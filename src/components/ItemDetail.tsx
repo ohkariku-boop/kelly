@@ -21,6 +21,7 @@ type Props = {
   onClose: () => void
   onUpdate: (item: Item) => void
   onMove: (id: string, status: ItemStatus) => void
+  onDelete?: (id: string) => void
 }
 
 export function ItemDetail({
@@ -32,6 +33,7 @@ export function ItemDetail({
   onClose,
   onUpdate,
   onMove,
+  onDelete,
 }: Props) {
   const [title, setTitle] = useState(item.title)
   const [description, setDescription] = useState(item.description || '')
@@ -151,12 +153,25 @@ export function ItemDetail({
           <span className="text-xs font-medium uppercase tracking-wider text-zinc-400">
             Item
           </span>
-          <button
-            onClick={onClose}
-            className="text-sm text-zinc-500 hover:text-zinc-800"
-          >
-            Close
-          </button>
+          <div className="flex items-center gap-2">
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm('Delete this item?')) onDelete(item.id)
+                }}
+                className="text-xs text-red-600 hover:text-red-700 px-2 py-1"
+              >
+                Delete
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-sm text-zinc-500 hover:text-zinc-800"
+            >
+              Close
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-auto p-4 space-y-5">

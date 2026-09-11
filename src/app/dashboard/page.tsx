@@ -18,6 +18,8 @@ import {
   createGoal,
   updateGoal,
   deleteGoal,
+  deleteItem,
+  deleteProduct,
 } from '@/lib/items'
 import { ItemDetail } from '@/components/ItemDetail'
 import { ProductGoals } from '@/components/ProductGoals'
@@ -36,6 +38,8 @@ import {
   localCreateGoal,
   localUpdateGoal,
   localDeleteGoal,
+  localDeleteItem,
+  localDeleteProduct,
   getActiveProductId,
   setActiveProductId,
 } from '@/lib/local-workspace'
@@ -617,6 +621,41 @@ export default function DashboardPage() {
               items={items}
               onSelect={selectProduct}
               onCreate={handleCreateProduct}
+              onDelete={async (id) => {
+                if (mode === 'kelly-pm') {
+                  const ok = localDeleteProduct(id)
+                  if (!ok) return
+                  const ws = loadWorkspace()
+                  setProducts(ws.products)
+                  setItems(ws.items)
+                  setGoals(ws.goals || [])
+                  setActiveProductIdState(getActiveProductId())
+                  setSelected(null)
+                  return
+                }
+                if (mode === 'demo') {
+                  setProducts((prev) => {
+                    const next = prev.filter((p) => p.id !== id)
+                    if (next.length === 0) return prev
+                    setActiveProductIdState(next[0]?.id ?? null)
+                    return next
+                  })
+                  setItems((prev) => prev.filter((i) => i.product_id !== id))
+                  setGoals((prev) => prev.filter((g) => g.product_id !== id))
+                  setSelected(null)
+                  return
+                }
+                const ok = await deleteProduct(id)
+                if (!ok) return
+                setProducts((prev) => {
+                  const next = prev.filter((p) => p.id !== id)
+                  setActiveProductIdState(next[0]?.id ?? null)
+                  return next
+                })
+                setItems((prev) => prev.filter((i) => i.product_id !== id))
+                setGoals((prev) => prev.filter((g) => g.product_id !== id))
+                setSelected(null)
+              }}
             />
           </div>
         )}
@@ -875,13 +914,32 @@ export default function DashboardPage() {
         <ItemDetail
           item={selected}
           workspaceId={workspaceId}
-          demoMode={mode !== 'supabase'}
+          demoMode={mode === 'demo'}
           kellyPmMode={mode === 'kelly-pm'}
+          goals={productGoals}
           onClose={() => setSelected(null)}
           onUpdate={(item) => {
             void handleItemUpdate(item)
           }}
           onMove={moveItem}
+          onDelete={async (id) => {
+            if (mode === 'kelly-pm') {
+              localDeleteItem(id)
+              setItems((prev) => prev.filter((i) => i.id !== id))
+              setSelected(null)
+              return
+            }
+            if (mode === 'demo') {
+              setItems((prev) => prev.filter((i) => i.id !== id))
+              setSelected(null)
+              return
+            }
+            const ok = await deleteItem(id)
+            if (ok) {
+              setItems((prev) => prev.filter((i) => i.id !== id))
+              setSelected(null)
+            }
+          }}
         />
       )}
     </div>

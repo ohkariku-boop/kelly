@@ -337,3 +337,26 @@ export async function deleteGoal(id: string): Promise<boolean> {
   }
   return true
 }
+
+export async function deleteItem(id: string): Promise<boolean> {
+  const supabase = createClient()
+  const { error } = await supabase.from('items').delete().eq('id', id)
+  if (error) {
+    console.error('deleteItem', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteProduct(id: string): Promise<boolean> {
+  const supabase = createClient()
+  // items/goals cascade or null via FK; delete product last
+  await supabase.from('items').delete().eq('product_id', id)
+  await supabase.from('goals').delete().eq('product_id', id)
+  const { error } = await supabase.from('products').delete().eq('id', id)
+  if (error) {
+    console.error('deleteProduct', error)
+    return false
+  }
+  return true
+}
