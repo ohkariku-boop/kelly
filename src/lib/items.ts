@@ -166,7 +166,7 @@ export async function updateItem(
   patch: Partial<
     Pick<
       Item,
-      'title' | 'description' | 'status' | 'priority' | 'owner_name' | 'target_date'
+      'title' | 'description' | 'status' | 'priority' | 'owner_name' | 'target_date' | 'goal_id'
     >
   >
 ): Promise<boolean> {
@@ -254,4 +254,86 @@ export async function createProduct(workspaceId: string, name: string) {
     return null
   }
   return data
+}
+
+export async function fetchGoals(
+  workspaceId: string,
+  productId?: string
+): Promise<import('@/types/database').Goal[]> {
+  const supabase = createClient()
+  let q = supabase
+    .from('goals')
+    .select('*')
+    .eq('workspace_id', workspaceId)
+    .order('created_at', { ascending: true })
+  if (productId) {
+    q = q.eq('product_id', productId)
+  }
+  const { data, error } = await q
+  if (error) {
+    console.error('fetchGoals', error)
+    return []
+  }
+  return (data || []) as import('@/types/database').Goal[]
+}
+
+export async function createGoal(
+  workspaceId: string,
+  productId: string,
+  title: string,
+  metric?: string
+): Promise<import('@/types/database').Goal | null> {
+  const supabase = createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const { data, error } = await supabase
+    .from('goals')
+    .insert({
+      workspace_id: workspaceId,
+      product_id: productId,
+      title: title.trim(),
+      metric: metric?.trim() || null,
+      status: 'active',
+      created_by: user?.id ?? null,
+    })
+    .select('*')
+    .single()
+  if (error) {
+    console.error('createGoal', error)
+    return null
+  }
+  return data as import('@/types/database').Goal
+}
+
+export async function updateGoal(
+  id: string,
+  patch: Partial<
+    Pick<
+      import('@/types/database').Goal,
+      'title' | 'description' | 'metric' | 'status'
+    >
+  >
+): Promise<boolean> {
+  const supabase = createClient()
+  const { error } = await supabase
+    .from('goals')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) {
+    console.error('updateGoal', error)
+    return false
+  }
+  return true
+}
+
+export async function deleteGoal(id: string): Promise<boolean> {
+  const supabase = createClient()
+  // clear item links first is optional; FK may set null
+  const { error } = await supabase.from('goals').delete().eq('id', id)
+  if (error) {
+    console.error('deleteGoal', error)
+    return false
+  }
+  return true
 }

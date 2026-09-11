@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import type { Item, ItemStatus, Product } from '@/types/database'
+import type { Item, ItemStatus, Product, Goal } from '@/types/database'
 import { STATUS_LABELS } from '@/types/database'
 import { createClient } from '@/lib/supabase/client'
 import {
@@ -14,12 +14,16 @@ import {
   updateItem,
   fetchProducts,
   createProduct,
+  fetchGoals,
+  createGoal,
+  updateGoal,
+  deleteGoal,
 } from '@/lib/items'
 import { ItemDetail } from '@/components/ItemDetail'
+import { ProductGoals } from '@/components/ProductGoals'
 import { ProductSidebar } from '@/components/ProductSidebar'
-import { DEMO_ITEMS, DEMO_PRODUCTS } from '@/lib/demo-data'
+import { DEMO_ITEMS, DEMO_PRODUCTS, DEMO_GOALS } from '@/lib/demo-data'
 import { initials, formatTargetDate } from '@/lib/format'
-import { localUpdateProduct } from '@/lib/local-workspace'
 import {
   isKellyPmSession,
   endKellyPmSession,
@@ -28,6 +32,10 @@ import {
   localUpdateStatus,
   localUpdateItem,
   localCreateProduct,
+  localUpdateProduct,
+  localCreateGoal,
+  localUpdateGoal,
+  localDeleteGoal,
   getActiveProductId,
   setActiveProductId,
 } from '@/lib/local-workspace'
@@ -230,6 +238,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const [items, setItems] = useState<Item[]>([])
   const [products, setProducts] = useState<Product[]>([])
+  const [goals, setGoals] = useState<Goal[]>([])
   const [activeProductId, setActiveProductIdState] = useState<string | null>(null)
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [mode, setMode] = useState<Mode>('loading')
@@ -257,6 +266,7 @@ export default function DashboardPage() {
         if (!cancelled) {
           setProducts(ws.products)
           setItems(ws.items)
+          setGoals(ws.goals || [])
           const saved = getActiveProductId()
           const id =
             saved && ws.products.some((p) => p.id === saved)
@@ -281,6 +291,7 @@ export default function DashboardPage() {
             setMode('demo')
             setProducts(DEMO_PRODUCTS)
             setItems(DEMO_ITEMS)
+            setGoals(DEMO_GOALS)
             setActiveProductIdState(DEMO_PRODUCTS[0]?.id ?? null)
           }
           return
@@ -307,9 +318,10 @@ export default function DashboardPage() {
           return
         }
 
-        const [remoteProducts, remoteItems] = await Promise.all([
+        const [remoteProducts, remoteItems, remoteGoals] = await Promise.all([
           fetchProducts(wsId),
           fetchItems(wsId),
+          fetchGoals(wsId),
         ])
         if (!cancelled) {
           setWorkspaceId(wsId)
@@ -317,6 +329,7 @@ export default function DashboardPage() {
           const prods = (remoteProducts as Product[]) || []
           setProducts(prods)
           setItems(remoteItems)
+          setGoals(remoteGoals)
           setActiveProductIdState(prods[0]?.id ?? null)
           // Seed a default product if empty workspace
           if (prods.length === 0) {
@@ -352,6 +365,11 @@ export default function DashboardPage() {
   const productItems = useMemo(
     () => items.filter((i) => i.product_id === activeProductId),
     [items, activeProductId]
+  )
+
+  const productGoals = useMemo(
+    () => goals.filter((g) => g.product_id === activeProductId),
+    [goals, activeProductId]
   )
 
   const moveItem = useCallback(
@@ -689,6 +707,58 @@ export default function DashboardPage() {
                     )}
                   </div>
                 </div>
+
+                <ProductGoals
+                  goals={productGoals}
+                  canEdit={mode === 'kelly-pm' || mode === 'supabase'}
+                  onAdd={async (title, metric) => {
+                    if (!activeProductId) return
+                    if (mode === 'kelly-pm') {
+                      const g = localCreateGoal(activeProductId, title, metric)
+                      setGoals((prev) => [...prev, g])
+                      return
+                    }
+                    if (!workspaceId) return
+                    const g = await createGoal(workspaceId, activeProductId, title, metric)
+                    if (g) setGoals((prev) => [...prev, g])
+                  }}
+                  onUpdateStatus={async (id, status) => {
+                    if (mode === 'kelly-pm') {
+                      localUpdateGoal(id, { status })
+                      setGoals((prev) =>
+                        prev.map((g) => (g.id === id ? { ...g, status } : g))
+                      )
+                      return
+                    }
+                    const ok = await updateGoal(id, { status })
+                    if (ok) {
+                      setGoals((prev) =>
+                        prev.map((g) => (g.id === id ? { ...g, status } : g))
+                      )
+                    }
+                  }}
+                  onRemove={async (id) => {
+                    if (mode === 'kelly-pm') {
+                      localDeleteGoal(id)
+                      setGoals((prev) => prev.filter((g) => g.id !== id))
+                      setItems((prev) =>
+                        prev.map((i) =>
+                          i.goal_id === id ? { ...i, goal_id: null } : i
+                        )
+                      )
+                      return
+                    }
+                    const ok = await deleteGoal(id)
+                    if (ok) {
+                      setGoals((prev) => prev.filter((g) => g.id !== id))
+                      setItems((prev) =>
+                        prev.map((i) =>
+                          i.goal_id === id ? { ...i, goal_id: null } : i
+                        )
+                      )
+                    }
+                  }}
+                />
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                   {COLUMNS.map((status) => (

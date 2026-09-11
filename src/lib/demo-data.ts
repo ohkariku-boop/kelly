@@ -1,4 +1,4 @@
-import type { Item, Feedback, Product } from '@/types/database'
+import type { Item, Feedback, Product, Goal } from '@/types/database'
 
 export const DEMO_WORKSPACE_NAME = 'Acme Product Org'
 
@@ -41,12 +41,52 @@ export const DEMO_PRODUCTS: Product[] = [
   },
 ]
 
+
+export const DEMO_GOALS: Goal[] = [
+  {
+    id: 'goal-mobile-conv',
+    workspace_id: 'demo',
+    product_id: 'prod-mobile',
+    title: 'Close the mobile conversion gap',
+    description: null,
+    metric: 'Mobile conversion within 5pp of desktop',
+    status: 'active',
+    created_by: null,
+    created_at: '2026-08-01T10:00:00Z',
+    updated_at: '2026-08-01T10:00:00Z',
+  },
+  {
+    id: 'goal-mobile-pay',
+    workspace_id: 'demo',
+    product_id: 'prod-mobile',
+    title: 'Faster checkout for returning users',
+    description: null,
+    metric: 'Median checkout time under 45s on mobile',
+    status: 'active',
+    created_by: null,
+    created_at: '2026-08-01T10:00:00Z',
+    updated_at: '2026-08-01T10:00:00Z',
+  },
+  {
+    id: 'goal-platform-upgrade',
+    workspace_id: 'demo',
+    product_id: 'prod-platform',
+    title: 'Clearer upgrade path',
+    description: null,
+    metric: 'Upgrade conversion +20% QoQ',
+    status: 'active',
+    created_by: null,
+    created_at: '2026-08-01T10:00:00Z',
+    updated_at: '2026-08-01T10:00:00Z',
+  },
+]
+
 export const DEMO_ITEMS: Item[] = [
   {
     id: 'demo-1',
     workspace_id: 'demo',
     product_id: 'prod-mobile',
-    goal_id: null,
+    goal_id: 'goal-mobile-conv',
     title: 'Reduce checkout drop-off on mobile',
     description:
       'Mobile conversion is 18% below desktop. Hypothesis: address form + payment step friction. Success: +8pp mobile conversion in 6 weeks.',
@@ -64,7 +104,7 @@ export const DEMO_ITEMS: Item[] = [
     id: 'demo-1b',
     workspace_id: 'demo',
     product_id: 'prod-mobile',
-    goal_id: null,
+    goal_id: 'goal-mobile-pay',
     title: 'Apple Pay & Google Pay on web checkout',
     description: 'One-tap pay for returning mobile users.',
     status: 'next',

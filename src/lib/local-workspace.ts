@@ -1,6 +1,6 @@
-import type { Item, ItemStatus, Feedback, Product } from '@/types/database'
+import type { Item, ItemStatus, Feedback, Product, Goal } from '@/types/database'
 import { PRODUCT_COLORS } from '@/types/database'
-import { DEMO_ITEMS, DEMO_FEEDBACK, DEMO_PRODUCTS } from '@/lib/demo-data'
+import { DEMO_ITEMS, DEMO_FEEDBACK, DEMO_PRODUCTS, DEMO_GOALS } from '@/lib/demo-data'
 
 const STORAGE_KEY = 'kelly-pm-workspace-v2'
 const SESSION_KEY = 'kelly-pm-session'
@@ -9,6 +9,7 @@ const ACTIVE_PRODUCT_KEY = 'kelly-pm-active-product'
 export type LocalWorkspace = {
   products: Product[]
   items: Item[]
+  goals: Goal[]
   feedback: Record<string, Feedback[]>
 }
 
@@ -23,6 +24,7 @@ export function startKellyPmSession() {
     saveWorkspace({
       products: structuredClone(DEMO_PRODUCTS),
       items: structuredClone(DEMO_ITEMS),
+      goals: structuredClone(DEMO_GOALS),
       feedback: structuredClone(DEMO_FEEDBACK),
     })
     setActiveProductId(DEMO_PRODUCTS[0]?.id ?? null)
@@ -40,6 +42,7 @@ export function loadWorkspace(): LocalWorkspace {
       return {
         products: structuredClone(DEMO_PRODUCTS),
         items: structuredClone(DEMO_ITEMS),
+        goals: structuredClone(DEMO_GOALS),
         feedback: structuredClone(DEMO_FEEDBACK),
       }
     }
@@ -56,12 +59,17 @@ export function loadWorkspace(): LocalWorkspace {
       product_id: i.product_id || parsed.products[0]?.id || 'prod-mobile',
       owner_name: i.owner_name ?? null,
       target_date: i.target_date ?? null,
+      goal_id: i.goal_id ?? null,
     }))
+    if (!parsed.goals?.length) {
+      parsed.goals = structuredClone(DEMO_GOALS)
+    }
     return parsed
   } catch {
     return {
       products: structuredClone(DEMO_PRODUCTS),
       items: structuredClone(DEMO_ITEMS),
+      goals: structuredClone(DEMO_GOALS),
       feedback: structuredClone(DEMO_FEEDBACK),
     }
   }
@@ -141,7 +149,7 @@ export function localUpdateStatus(id: string, status: ItemStatus) {
 export function localUpdateItem(
   id: string,
   patch: Partial<
-    Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'product_id' | 'owner_name' | 'target_date'>
+    Pick<Item, 'title' | 'description' | 'status' | 'priority' | 'product_id' | 'owner_name' | 'target_date' | 'goal_id'>
   >
 ) {
   const ws = loadWorkspace()
@@ -187,6 +195,56 @@ export function localUpdateProduct(
     p.id === id
       ? { ...p, ...patch, updated_at: new Date().toISOString() }
       : p
+  )
+  saveWorkspace(ws)
+}
+
+
+export function localListGoals(productId: string): Goal[] {
+  return loadWorkspace().goals.filter(
+    (g) => g.product_id === productId && g.status !== 'abandoned'
+  )
+}
+
+export function localCreateGoal(
+  productId: string,
+  title: string,
+  metric?: string
+): Goal {
+  const ws = loadWorkspace()
+  const goal: Goal = {
+    id: crypto.randomUUID(),
+    workspace_id: 'kelly-pm',
+    product_id: productId,
+    title: title.trim(),
+    description: null,
+    metric: metric?.trim() || null,
+    status: 'active',
+    created_by: 'kelly-pm',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+  ws.goals = [...(ws.goals || []), goal]
+  saveWorkspace(ws)
+  return goal
+}
+
+export function localUpdateGoal(
+  id: string,
+  patch: Partial<Pick<Goal, 'title' | 'metric' | 'status' | 'description'>>
+) {
+  const ws = loadWorkspace()
+  ws.goals = (ws.goals || []).map((g) =>
+    g.id === id ? { ...g, ...patch, updated_at: new Date().toISOString() } : g
+  )
+  saveWorkspace(ws)
+}
+
+export function localDeleteGoal(id: string) {
+  const ws = loadWorkspace()
+  ws.goals = (ws.goals || []).filter((g) => g.id !== id)
+  ws.items = ws.items.map((i) =>
+    i.goal_id === id ? { ...i, goal_id: null } : i
   )
   saveWorkspace(ws)
 }

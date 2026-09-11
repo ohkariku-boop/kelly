@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import type { Item, ItemStatus, Feedback } from '@/types/database'
+import type { Item, ItemStatus, Feedback, Goal } from '@/types/database'
 import { STATUS_LABELS, ITEM_STATUSES } from '@/types/database'
 import { updateItem, fetchFeedback, addFeedback } from '@/lib/items'
 import { DEMO_FEEDBACK } from '@/lib/demo-data'
@@ -17,6 +17,7 @@ type Props = {
   workspaceId: string | null
   demoMode: boolean
   kellyPmMode?: boolean
+  goals?: Goal[]
   onClose: () => void
   onUpdate: (item: Item) => void
   onMove: (id: string, status: ItemStatus) => void
@@ -27,6 +28,7 @@ export function ItemDetail({
   workspaceId,
   demoMode,
   kellyPmMode = false,
+  goals = [],
   onClose,
   onUpdate,
   onMove,
@@ -35,6 +37,7 @@ export function ItemDetail({
   const [description, setDescription] = useState(item.description || '')
   const [ownerName, setOwnerName] = useState(item.owner_name || '')
   const [targetDate, setTargetDate] = useState(item.target_date || '')
+  const [goalId, setGoalId] = useState(item.goal_id || '')
   const [feedback, setFeedback] = useState<Feedback[]>([])
   const [fbDraft, setFbDraft] = useState('')
   const [saving, setSaving] = useState(false)
@@ -45,6 +48,7 @@ export function ItemDetail({
     setDescription(item.description || '')
     setOwnerName(item.owner_name || '')
     setTargetDate(item.target_date || '')
+    setGoalId(item.goal_id || '')
     if (kellyPmMode) {
       setFeedback(localGetFeedback(item.id))
     } else if (!demoMode && workspaceId) {
@@ -58,6 +62,7 @@ export function ItemDetail({
     item.description,
     item.owner_name,
     item.target_date,
+    item.goal_id,
     demoMode,
     workspaceId,
     kellyPmMode,
@@ -70,6 +75,7 @@ export function ItemDetail({
       description: description.trim() || null,
       owner_name: ownerName.trim() || null,
       target_date: targetDate.trim() || null,
+      goal_id: goalId || null,
     }
     if (kellyPmMode) {
       localUpdateItem(item.id, {
@@ -77,6 +83,7 @@ export function ItemDetail({
         description: next.description,
         owner_name: next.owner_name,
         target_date: next.target_date,
+        goal_id: next.goal_id,
       })
       onUpdate(next)
       return
@@ -91,6 +98,7 @@ export function ItemDetail({
       description: next.description,
       owner_name: next.owner_name,
       target_date: next.target_date,
+      goal_id: next.goal_id,
     })
     setSaving(false)
     if (ok) onUpdate(next)
@@ -224,6 +232,32 @@ export function ItemDetail({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-400 mb-2">
+              Goal
+            </p>
+            <select
+              value={goalId}
+              onChange={(e) => {
+                setGoalId(e.target.value)
+              }}
+              onBlur={saveMeta}
+              className="w-full text-sm border border-zinc-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-zinc-400 text-zinc-700 bg-white"
+            >
+              <option value="">None</option>
+              {goals
+                .filter((g) => g.status === 'active')
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.title}
+                  </option>
+                ))}
+            </select>
+            <p className="text-[11px] text-zinc-400 mt-1">
+              Optional. Link this bet to a product outcome.
+            </p>
           </div>
 
           <div>
